@@ -1,0 +1,16 @@
+data-repo/
+.venv/
+__pycache__/
+*.log
+_acl*/
+clone.log
+pip-*.log
+
+# added for GitHub
+pip-*/
+.pytest_cache/
+*.pyc
+.ds-logs/
+.env
+.env.*
+*.whl
