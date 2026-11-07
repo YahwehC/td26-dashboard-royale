@@ -584,3 +584,11 @@ select[multiple] { min-height: 118px; padding: 4px; }
   html { scroll-behavior: auto; }
   * { transition: none !important; }
 }
+
+/* Evidence links from the Plan tab: highlight the target chart briefly */
+.evidence-flash { animation: evidence-flash 2.4s ease-out 1; }
+@keyframes evidence-flash {
+  0%, 35% { box-shadow: 0 0 0 3px var(--cat-1); }
+  100% { box-shadow: 0 0 0 3px transparent; }
+}
+@media (prefers-reduced-motion: reduce) { .evidence-flash { animation: none; outline: 3px solid var(--cat-1); } }

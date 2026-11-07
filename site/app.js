@@ -2992,7 +2992,25 @@ function applyEvidenceLink(ev) {
   syncHash();
   applyStateToView();
   render();
-  window.scrollTo({ top: 0, behavior: 'auto' });
+  // Jump to the chart that holds the evidence and flash it, so a judge can trace the recommendation.
+  const target = ev.anchor && [...document.querySelectorAll('main section.card')]
+    .find(c => { const h = c.querySelector('h2'); return h && h.textContent.toLowerCase().includes(String(ev.anchor).toLowerCase()); });
+  if (target) {
+    const jump = () => {
+      const bar = document.querySelector('.filterbar');
+      const top = target.getBoundingClientRect().top + window.scrollY - (bar ? bar.offsetHeight : 0) - 12;
+      window.scrollTo({ top: Math.max(0, top), behavior: 'auto' });
+    };
+    jump();
+    setTimeout(jump, 350);  // charts resize after attach; jump again once the layout settles
+    target.classList.remove('evidence-flash');
+    void target.offsetWidth;
+    target.classList.add('evidence-flash');
+    target.setAttribute('tabindex', '-1');
+    target.focus({ preventScroll: true });
+  } else {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }
 }
 
 /* ---- 6.8 Model ---- */

@@ -25,11 +25,13 @@
    "evidence": [
     {
      "tab": "machines",
-     "label": "Leak test: hit-rate z-scores"
+     "label": "Leak test: hit-rate z-scores",
+     "anchor": "Hit-rate screen"
     },
     {
      "tab": "verdict",
-     "label": "GM's bottom-10, rank 2"
+     "label": "GM's bottom-10, rank 2",
+     "anchor": "bottom 10 machines"
     }
    ]
   },
@@ -57,11 +59,13 @@
    "evidence": [
     {
      "tab": "demand",
-     "label": "Event lifts"
+     "label": "Event lifts",
+     "anchor": "Event weeks"
     },
     {
      "tab": "model",
-     "label": "Model B forecast"
+     "label": "Model B forecast",
+     "anchor": "Model B:"
     }
    ]
   },
@@ -88,11 +92,13 @@
    "evidence": [
     {
      "tab": "demand",
-     "label": "Back Forty vs rest, weekly"
+     "label": "Back Forty vs rest, weekly",
+     "anchor": "B40-to-rest"
     },
     {
-     "tab": "machines",
-     "label": "Zone factors"
+     "tab": "demand",
+     "label": "Zone earning rates",
+     "anchor": "Zone table"
     }
    ]
   }

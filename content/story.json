@@ -39,7 +39,7 @@
  "players": {
   "title": "Q4 · What did tracked players wager, get back and net?",
   "question": "Card holders only — how concentrated are the results?",
-  "answer": "113,890 card holders wagered $163.8M and got back $148.2M: as a group they <b>lost $15.6M</b>, almost exactly their theo ($15.5M) — the house did not get lucky with carded play. Only <b>13.6% of players finished ahead</b>. Results are very concentrated: the top 1% of players generate 23% of theo and the top 10% generate 66%; the top 10% of losers account for ~80% of all net losses.",
+  "answer": "113,890 card holders wagered $163.8M and got back $148.2M: as a group they <b>lost $15.6M</b>, almost exactly their theo ($15.5M) — the house did not get lucky with carded play. Only <b>13.6% of players finished ahead</b>. Results are very concentrated: the top 1% of players generate 23% of theo and the top 10% generate 66%; the top 10% of losing players account for 53% of all net losses ($20.9M lost by 80,992 losers, $5.4M won by winners).",
   "notes": [
    "Player tables cover carded play only (~66% of coin-in); uncarded play is invisible at the person level.",
    "Responsible gaming: we do not propose any action that targets the heaviest losers. The promotion is open to all guests and is not based on losses; self-excluded guests stay excluded."
