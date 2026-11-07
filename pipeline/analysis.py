@@ -313,7 +313,7 @@ def section_substitution(con):
     bh["gaming_date"] = pd.to_datetime(bh["gaming_date"])
     bh["down_s"] = np.maximum(0, 3600 - bh["available_seconds"])
     bh["isdown"] = bh["down_s"] >= 1800
-    bh["weekday"] = bh["gaming_date"].dt.dayofweek
+    bh["weekday"] = bh["gaming_date"].dt.day_of_week
 
     bank_hour = (
         bh.groupby(["bank_id", "hour_start_utc", "gaming_date", "local_hour", "weekday"],
@@ -532,7 +532,7 @@ def section_closure(con, dates: pd.DatetimeIndex):
     daily["rest_rate"] = np.where(daily["rest_av"] > 0,
                                   daily["rest_theo"] / daily["rest_av"], np.nan)
     daily["ratio"] = daily["b40_rate"] / daily["rest_rate"]
-    daily["week_start"] = daily.index - pd.to_timedelta(daily.index.dayofweek, unit="D")
+    daily["week_start"] = daily.index - pd.to_timedelta(daily.index.day_of_week, unit="D")
 
     weekly = (
         daily.groupby("week_start")[["b40_theo", "b40_av", "rest_theo", "rest_av"]]
@@ -579,7 +579,7 @@ def section_closure(con, dates: pd.DatetimeIndex):
     traffic["gaming_date"] = pd.to_datetime(traffic["gaming_date"])
     traffic["week_start"] = (
         traffic["gaming_date"]
-        - pd.to_timedelta(traffic["gaming_date"].dt.dayofweek, unit="D")
+        - pd.to_timedelta(traffic["gaming_date"].dt.day_of_week, unit="D")
     )
     tg = (
         traffic.groupby(["zone_id", "week_start"], as_index=False)
@@ -626,29 +626,25 @@ def section_closure(con, dates: pd.DatetimeIndex):
 # --------------------------------------------------------------------------- #
 def detect_comp_change(daily: pd.DataFrame):
     """
-    First gaming date d such that the 7-day mean of pts_per_face_usd after d is
-    below 0.7x the 7-day mean before d, and the whole week after d is in the
-    depressed regime.  Requiring the full forward week prevents the three
-    transition days (Apr 28-30) from being reported as the price change: the
-    actual change is a clean step on 2025-05-01.
+    First gaming date d such that the 7-day ratio of sums (points / face $) after d is below 0.7x the
+    7-day ratio of sums before d, and every single day of the week after d is below that threshold
+    (so the Apr 28-30 transition days are not reported as the change). Ratio of sums, not mean of ratios.
     """
+    pts = daily["pts"].to_numpy(dtype=float)
+    face = daily["face"].to_numpy(dtype=float)
     vals = daily["pts_per_face_usd"].to_numpy(dtype=float)
     idx = daily.index
-    for i in range(7, len(vals) - 6):
-        before = np.nanmean(vals[i - 7:i])
-        after_win = vals[i:i + 7]
-        after = np.nanmean(after_win)
-        if not (np.isfinite(before) and np.isfinite(after)) or before <= 0:
-            continue
-        threshold = 0.7 * before
-        if after < threshold and np.nanmax(after_win) < threshold:
-            return idx[i]
-    # fallback: plain spec test, then first date
-    for i in range(7, len(vals) - 6):
-        before = np.nanmean(vals[i - 7:i])
-        after = np.nanmean(vals[i:i + 7])
-        if np.isfinite(before) and np.isfinite(after) and after < 0.7 * before:
-            return idx[i]
+    def ros(lo, hi):
+        f = np.nansum(face[lo:hi])
+        return np.nansum(pts[lo:hi]) / f if f > 0 else np.nan
+    for strict in (True, False):
+        for i in range(7, len(vals) - 6):
+            before, after = ros(i - 7, i), ros(i, i + 7)
+            if not (np.isfinite(before) and np.isfinite(after)) or before <= 0:
+                continue
+            threshold = 0.7 * before
+            if after < threshold and (not strict or np.nanmax(vals[i:i + 7]) < threshold):
+                return idx[i]
     return idx[0]
 
 
@@ -801,8 +797,12 @@ def section_comp(con, dates: pd.DatetimeIndex):
             "tier": str(tier),
             "theo_pre_per_player_month": float(a["theo_usd"].sum() / len(a)),
             "theo_post_per_player_month": float(b["theo_usd"].sum() / len(b)),
-            "comp_cost_pre": float(a["comp_cost_usd"].sum() / len(a)),
-            "comp_cost_post": float(b["comp_cost_usd"].sum() / len(b)),
+            # total comp cost in the period (the plain spec key) ...
+            "comp_cost_pre": float(a["comp_cost_usd"].sum()),
+            "comp_cost_post": float(b["comp_cost_usd"].sum()),
+            # ... and the same spend per active player-month for comparability
+            "comp_cost_pre_per_player_month": float(a["comp_cost_usd"].sum() / len(a)),
+            "comp_cost_post_per_player_month": float(b["comp_cost_usd"].sum() / len(b)),
         })
 
     out = {
@@ -856,13 +856,13 @@ def section_events(con):
         if not edates:
             continue
         event_mean = float(prop.loc[edates, "coin_in_usd"].mean())
-        weekdays = {d.dayofweek for d in edates}
+        weekdays = {d.day_of_week for d in edates}
         bstart = r.start_date - pd.Timedelta(days=28)
         bend = r.start_date - pd.Timedelta(days=1)
         bdates = [
             d for d in pd.date_range(bstart, bend, freq="D")
             if d in prop.index
-            and d.dayofweek in weekdays
+            and d.day_of_week in weekdays
             and d not in all_event_dates
         ]
         base_mean = float(prop.loc[bdates, "coin_in_usd"].mean()) if bdates else None
@@ -931,6 +931,8 @@ def build_report(dates, A, Aaux, B, Bax, C, Caux, D, Daux, E, Eaux, F, Faux) -> 
         ["month", "down_h", "lost_theo_usd"],
         [[m, fmt(r.down_h, 2), fmt(r.lost_theo, 2)] for m, r in bm.iterrows()],
     ))
+    L.append("")
+    L.append("Full 181-day `by_date` arrays are in `site/data/analysis.json`.")
     L.append("")
     L.append("### Downtime by local hour")
     L.append("")
@@ -1112,16 +1114,22 @@ def build_report(dates, A, Aaux, B, Bax, C, Caux, D, Daux, E, Eaux, F, Faux) -> 
     L.append("DiD = ln(carded post/pre) − ln(uncarded post/pre), using daily floor means; "
              "CI from 1,000 bootstraps resampling days within each period (seed 42).")
     L.append("")
-    L.append("### Theo and comp cost by opening tier (per active player-month)")
+    L.append("### Theo and comp cost by opening tier (Mar–Apr vs May–Jun)")
+    L.append("")
+    L.append("Theo is per active player-month. `comp_cost_pre` / `comp_cost_post` are total "
+             "tier spend; the per-player-month columns are shown for comparability.")
     L.append("")
     L.append(md_table(
-        ["tier", "theo_pre_Mar–Apr", "theo_post_May–Jun", "comp_cost_pre", "comp_cost_post"],
+        ["tier", "theo_pre", "theo_post", "comp_cost_pre_total", "comp_cost_post_total",
+         "comp_cost_pre /player-month", "comp_cost_post /player-month"],
         [[r["tier"], fmt(r["theo_pre_per_player_month"], 2),
           fmt(r["theo_post_per_player_month"], 2), fmt(r["comp_cost_pre"], 2),
-          fmt(r["comp_cost_post"], 2)] for r in E["by_opening_tier"]],
+          fmt(r["comp_cost_post"], 2), fmt(r["comp_cost_pre_per_player_month"], 2),
+          fmt(r["comp_cost_post_per_player_month"], 2)]
+         for r in E["by_opening_tier"]],
     ))
     L.append("")
-    L.append("No clean control exists for the tier split; these are descriptive pre/post means.")
+    L.append("No clean control exists for the tier split; these are descriptive pre/post values.")
     L.append("")
 
     # ---- F ----
@@ -1137,6 +1145,9 @@ def build_report(dates, A, Aaux, B, Bax, C, Caux, D, Daux, E, Eaux, F, Faux) -> 
           fmt(r["lift_usd_per_day"], 2), r["n_days"], r["n_baseline_days"]]
          for r in F],
     ))
+    L.append("")
+    L.append("The CES baseline is limited to Jan 1–3 because the dataset window starts on "
+             "2025-01-01; all other events have a full four-week baseline.")
     L.append("")
     return "\n".join(L)
 

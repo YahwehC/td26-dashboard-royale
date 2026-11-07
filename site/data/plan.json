@@ -1,0 +1,178 @@
+{
+ "budget": 100000,
+ "horizon": "2025-07-01..2025-07-30",
+ "actions": [
+  {
+   "id": "A-INSPECT",
+   "name": "Machine inspection and paytable verification",
+   "qty": 1,
+   "targets": [
+    "M-1158 (Back Forty, Desert Gold, slot L-31-4)"
+   ],
+   "cost": 1200.0,
+   "lead_days": 1,
+   "effect_low": 0,
+   "effect_mid": 5794,
+   "effect_high": 5794,
+   "effect_unit": "$ theo-equivalent house win, Jul 2-30",
+   "assumptions": [
+    "M-1158 hit rate 38.6% vs configured 31.5% over 674k spins (z = +124); observed hold 3.0% vs 10% configured",
+    "If the paytable is restored, house win returns to theo: +$200/day at the H1 coin-in of $2,871/day",
+    "Play volume stays the same after the fix (it may fall if players liked the looser game)"
+   ],
+   "uncertainty": "Diagnosis is near-certain (a hit-rate gap this size is not luck); the cause is unknown (paytable, firmware, meter). Outcome is information first.",
+   "measurement": "After the fix, hit rate on the next 50,000 spins must be within 31.5% ± 0.4 pp (±2 SE); observed hold tracked weekly vs 10% theo hold.",
+   "evidence": [
+    {
+     "tab": "machines",
+     "label": "Leak test: hit-rate z-scores"
+    },
+    {
+     "tab": "verdict",
+     "label": "GM's bottom-10, rank 2"
+    }
+   ]
+  },
+  {
+   "id": "A-PROMO",
+   "name": "Property promotion weekend",
+   "qty": 1,
+   "targets": [
+    "Slot-tournament weekend, Fri-Sun Jul 25-27 (after the 14-day lead)"
+   ],
+   "cost": 15000.0,
+   "lead_days": 14,
+   "effect_low": 27515,
+   "effect_mid": 52956,
+   "effect_high": 78397,
+   "effect_unit": "$ extra floor theo over the weekend",
+   "assumptions": [
+    "High = Feb 21-23 Winter Slot Tournament: +$82,524 theo vs a normal Fri-Sun, no dip in the following days",
+    "Low = the weaker Locals Week format: +6.4% of a normal weekend",
+    "July demand ×0.95 vs Feb (LVCVA visitors and our June floor were both down)",
+    "Prizes, marketing and staffing are inside the $15,000 package"
+   ],
+   "uncertainty": "Two past promotions gave +6% and +19%; the 14-day lead is shorter than the 4-week lead of the February event.",
+   "measurement": "Model B (weekday forecast, frozen on Jul 1) gives the counterfactual; lift = actual − forecast. Daily MAE is ~5%, so a 3-day lift above ~6% is distinguishable from noise. Check the next weekend for pull-forward.",
+   "evidence": [
+    {
+     "tab": "demand",
+     "label": "Event lifts"
+    },
+    {
+     "tab": "model",
+     "label": "Model B forecast"
+    }
+   ]
+  },
+  {
+   "id": "A-WAYFINDING",
+   "name": "Wayfinding and signage refresh for a zone",
+   "qty": 1,
+   "targets": [
+    "Back Forty (Z-B40): signs + sightlines on the Main Entrance walkway (W-ENT-B40) and at the Garage side"
+   ],
+   "cost": 7500.0,
+   "lead_days": 10,
+   "effect_low": 2657,
+   "effect_mid": 10584,
+   "effect_high": 21253,
+   "effect_unit": "$ extra Back Forty theo, Jul 11-30",
+   "assumptions": [
+    "Back Forty earns $13,283/day of theo (May-Jun); 20 days after the 10-day lead",
+    "The walkway closure proved its demand depends on access from the main entrance: ratio to the rest of the floor 0.669 -> 0.461 while closed, and only back to 0.643 after",
+    "Low +1%, mid +4.0% (closes the post-closure gap), high +8%; break-even = +2.8%"
+   ],
+   "uncertainty": "No past signage change to learn from; the closure shows that access matters, not how much signs restore.",
+   "measurement": "Weekly Back Forty ÷ rest-of-floor theo per open hour vs the post-closure baseline 0.643 (weekly SD ≈ 0.01, so +3% is visible in ~3 weeks), plus Back Forty counter entries per sensor-day. No machine moves in the zone during the test.",
+   "evidence": [
+    {
+     "tab": "demand",
+     "label": "Back Forty vs rest, weekly"
+    },
+    {
+     "tab": "machines",
+     "label": "Zone factors"
+    }
+   ]
+  }
+ ],
+ "rejected": [
+  {
+   "name": "Replace the GM's bottom-10 with leased machines",
+   "cost": 33800.0,
+   "expected_benefit": "≈ $0 net in July: the 10 are average machines in a weak zone or low-hold games; a new cabinet in the same slot inherits the slot",
+   "reason": "Model A decision test: the GM's 10 had a May-Jun location/game-adjusted index of 1.01 (average) and 0 of them were among the truly weakest 10."
+  },
+  {
+   "name": "Add a slot technician to the grave shift",
+   "cost": 11520.0,
+   "expected_benefit": "≈ $739 of recovered theo in 23 days",
+   "reason": "Grave-shift faults wait 2.0 h vs 0.7 h on a fully staffed swing shift, but only ~50 faults/month happen at night, when a machine-hour is worth $15."
+  },
+  {
+   "name": "Preventive maintenance, Ridgeline",
+   "cost": 9000.0,
+   "expected_benefit": "≈ $4,551 if it prevents 25% of Ridgeline faults (repair cost + lost theo)",
+   "reason": "Ridgeline faults are 2-3× the other brands per machine, but they already fell ~28% after March; no data on what preventive maintenance achieves."
+  },
+  {
+   "name": "Move strong games out of Back Forty (8 swap pairs)",
+   "cost": 28800.0,
+   "expected_benefit": "≈ $28,007 in July (mid), then ≈ $1,000/day",
+   "reason": "The zone × game model says the best games belong in the busiest zones, but in July only 1 pair(s) beat their own $3,600 cost by 10% (strong games that are weak for their spot are not promoted). It also confounds the signage test in the same zone: run it in August after the signs are measured."
+  },
+  {
+   "name": "Comp policy pilot with control group",
+   "cost": 4000.0,
+   "expected_benefit": "Information: is the May 1 comp price cut paying for itself?",
+   "reason": "Strong #4. Carded coin-in rose 2.8% vs uncarded after May 1 (placebo ≈ 0), but that may be more card use rather than more play. Recommended next once a slot frees up."
+  },
+  {
+   "name": "Second promotion weekend",
+   "cost": 15000.0,
+   "expected_benefit": "Unknown until the first one is measured",
+   "reason": "Test one, measure against the frozen forecast, then scale."
+  },
+  {
+   "name": "Bigger guest survey / purchased machine / floor-wide comp change",
+   "cost": null,
+   "expected_benefit": "—",
+   "reason": "No evidence linking them to the causes we found; a purchase ($22,000) has 9 operating days in the horizon."
+  }
+ ],
+ "spent": 23700.0,
+ "kept": 76300.0,
+ "sensitivity": [
+  {
+   "scenario": "All three actions at LOW effect",
+   "benefit": 30172,
+   "cost": 23700.0
+  },
+  {
+   "scenario": "All at MID",
+   "benefit": 69334,
+   "cost": 23700.0
+  },
+  {
+   "scenario": "All at HIGH",
+   "benefit": 105444,
+   "cost": 23700.0
+  },
+  {
+   "scenario": "Promotion flops (0), others MID",
+   "benefit": 16378,
+   "cost": 23700.0
+  },
+  {
+   "scenario": "Inspection finds nothing, promotion and signs MID",
+   "benefit": 63540,
+   "cost": 23700.0
+  },
+  {
+   "scenario": "Promotion only at the weak Locals-week lift, no seasonality discount",
+   "benefit": 28963,
+   "cost": 15000.0
+  }
+ ]
+}

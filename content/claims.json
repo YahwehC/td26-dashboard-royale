@@ -1,0 +1,119 @@
+[
+ {
+  "id": "C1",
+  "tab": "verdict",
+  "claim": "None of the GM's bottom-10 (lowest total house win) is a weak machine.",
+  "source": "prepared_daily_view + machine_day + game_math; zone × game IPF fit (pipeline/model.py full fit; recomputed in app.js for any period)",
+  "result": "9/10 in Back Forty (zone rate $12.4 vs $15.5–21.5 per open hour elsewhere); 6/10 low-hold games (game factor 0.55–0.68); 3/10 on the floor 49–132 days; machine index 0.95–1.10 for all ten.",
+  "alternative": "Bad luck: luck z of the ten ranges −2.4 to +0.6 except M-1158 (−4.6), so luck adds to the shortfall but does not create it. Downtime: availability 99.5–99.9% for all ten.",
+  "limitation": "Zone × game is a fitted structure; a machine's own appeal and its slot within a bank cannot be fully separated without moving it."
+ },
+ {
+  "id": "C2",
+  "tab": "machines",
+  "claim": "M-1158 pays out far more often than its configured game; it should be inspected.",
+  "source": "machine_day.payout_positive_spins / paid_spins vs game_math.hit_probability (G-STD90 = 0.31544)",
+  "result": "Hit rate 38.6% over 674,454 spins, z = +124 (next-largest |z| among 310 machines = 2.8); observed hold 3.0% vs 10% configured; luck residual −$36,165 (z = −4.6). Stable every month Jan–Jun.",
+  "alternative": "Luck: ruled out (binomial z = 124). A meter/reporting fault rather than a paytable change is possible — that is what inspection decides.",
+  "limitation": "A pattern is a lead, not proof of wrongdoing; the cause is unknown."
+ },
+ {
+  "id": "C3",
+  "tab": "machines",
+  "claim": "Game factors are multiplicative and the same in every zone.",
+  "source": "prepared_daily_view: sum(theo_usd)/sum(available_hours) by config × zone, divided by the zone rate",
+  "result": "e.g. Royal Draw 0.59 (Back Forty), 0.55 (Bar), 0.57 (Entrance), 0.54 (Garage), 0.58 (Hotel), 0.55 (Pit); machine index after zone × game has SD ≈ 6%.",
+  "alternative": "Players sort themselves (fans of a game seek it out): would show up as zone × game interactions; none are visible, but it is the reason our 'low' case halves the swap gain.",
+  "limitation": "Observational; the swap plan is designed as a measured test."
+ },
+ {
+  "id": "C4",
+  "tab": "demand",
+  "claim": "The Mar 3–Apr 7 walkway closure cut Back Forty play by about a third and cost ~$163,000 of expected win.",
+  "source": "floor_walkways (W-ENT-B40 closure) + prepared_daily_view; ratio of Back Forty to rest-of-floor theo per open hour (pipeline/analysis.py §D)",
+  "result": "Ratio 0.669 before, 0.461 during, 0.643 after; lost theo = Σ closure days (rest rate × pre ratio × B40 hours − B40 theo) = $163,371.",
+  "alternative": "A floor-wide dip in March: ruled out — the rest of the floor was flat or up in the same weeks (ratio, not level).",
+  "limitation": "Counterfactual assumes the pre-closure ratio would have held; the post-closure ratio (0.643) suggests part of the gap is a lasting habit change."
+ },
+ {
+  "id": "C5",
+  "tab": "demand",
+  "claim": "June demand fell with the city, not because of the floor.",
+  "source": "property_day coin-in by month vs real_sources/city_visitation_monthly (LVCVA)",
+  "result": "Floor coin-in/day June −4% vs Jan–Apr; LVCVA June visitors −7% vs Jan–Apr mean, convention attendance 375k vs ~590k.",
+  "alternative": "Heat (NOAA June mean max 38.6 °C) — moves with the same months; we cannot separate heat from tourism with 6 monthly points.",
+  "limitation": "LVCVA describes all Las Vegas visitors and was published later; context only."
+ },
+ {
+  "id": "C6",
+  "tab": "downtime",
+  "claim": "Downtime cost ~$99,000 of expected win (0.42% of theo), mostly from Ridgeline cabinets.",
+  "source": "machine_hour (available_seconds) × each machine's theo per open hour at that local hour (pipeline/analysis.py §A)",
+  "result": "5,021 down hours; $98,886 lost theo; Ridgeline $54,222 (55%) with 94 of 310 machines.",
+  "alternative": "Players move to a neighbour (then nothing is lost): matched bank-hour test shows other machines' occupancy rises only +0.5 pp (+1.1%, 95% CI 0.15–0.79 pp).",
+  "limitation": "Upper bound; uses average rates by hour of day, not the exact demand at the minute of the fault."
+ },
+ {
+  "id": "C7",
+  "tab": "downtime",
+  "claim": "Short-staffed shifts roughly triple repair wait.",
+  "source": "operations (opened → work_started) joined to shift_roster slot_tech headcounts (pipeline/analysis.py §C)",
+  "result": "Day shift: 2.0 h when short (n=72) vs 0.58 h (n=255); swing 2.6 h vs 0.70 h; grave (always 1 tech) 2.0 h. OLS: −1.82 h per extra tech (SE 0.17).",
+  "alternative": "Harder faults on short days: repair duration (work_started → available) is ~3 h at every hour, so the difference is waiting, not difficulty.",
+  "limitation": "Absences were concentrated in April–May; seasonality and staffing overlap."
+ },
+ {
+  "id": "C8",
+  "tab": "players",
+  "claim": "Tracked players lost $15.6M, in line with theo; results are highly concentrated.",
+  "source": "player_period (tracked_net_usd, theo_usd), per player over Jan–Jun",
+  "result": "Net −$15,585,461 vs theo $15,485,021; 13.6% of 113,890 players ahead; top 1% = 22.7% of theo, top 10% = 66.4%.",
+  "alternative": "House luck on carded play: luck residual is only −0.6% of theo.",
+  "limitation": "Carded play only (~66% of coin-in); a player may also play uncarded."
+ },
+ {
+  "id": "C9",
+  "tab": "comps",
+  "claim": "On May 1 comps became 2.3× cheaper in points; comp cost rose ~10%/month and carded play rose 2.8% vs uncarded.",
+  "source": "loyalty_ledger redemptions (points ÷ face value per gaming day); player_period comp_cost; machine_day carded vs uncarded coin-in (DiD, pipeline/analysis.py §E)",
+  "result": "13.1 → 5.8 points per comp $; reinvestment 1.1% → 1.3% of theo; DiD +2.8% (95% CI 0.5–5.2%); placebo (Jan–Feb vs Mar–Apr) −0.8% (CI −3.0–1.5%).",
+  "alternative": "More card use rather than more play: theo per active player-month is flat by tier (Base 94→96, Gold 222→220) and total floor coin-in did not rise — consistent with re-carding.",
+  "limitation": "No randomized control; that is what the comp pilot would add."
+ },
+ {
+  "id": "C10",
+  "tab": "model",
+  "claim": "Adjusting for location and game ranks machines' future earnings better than raw house win.",
+  "source": "pipeline/model.py: TRAIN Jan–Apr, HOLD May–Jun, 307 machines; inner validation for shrinkage k",
+  "result": "Relative error 3.1% (model) vs 3.8% (own theo history) vs 11.7% (own house win); GM's list May–Jun index 1.01 with 0/10 in the true bottom-10; model's list 0.90 with 4/10.",
+  "alternative": "Simple luck removal (theo history) already captures most of the gain and wins on absolute $ MAE (1.06 vs 1.26 $/h) because all methods miss the May–Jun floor slowdown.",
+  "limitation": "One 2-month holdout; the walkway closure inside TRAIN makes Back Forty harder to forecast."
+ },
+ {
+  "id": "C11",
+  "tab": "plan",
+  "claim": "A promotion weekend should return 2–5× its $15,000 cost.",
+  "source": "property_day theo on event days vs same weekdays without events; events table",
+  "result": "Winter Slot Tournament (Feb 21–23): +$82,500 theo vs a normal Fri–Sun, with no dip in the following week; Locals Week +6.5%/day.",
+  "alternative": "The February lift came from something else that weekend: no other event in the calendar; Super Bowl was two weeks earlier.",
+  "limitation": "Two past promotions only; July is a weaker month (×0.95 applied) and the lead is 14 days instead of 4 weeks."
+ },
+ {
+  "id": "C12",
+  "tab": "plan",
+  "claim": "New Back Forty signs need only a 2.8% lift to pay back in July; the closure showed the zone's demand depends on access.",
+  "source": "pipeline/plan.py; Back Forty theo/day May–Jun from prepared_daily_view; closure ratios from pipeline/analysis.py §D",
+  "result": "Back Forty ≈ $13,200 theo/day; 20 days after the 10-day lead; mid case closes the post-closure gap (0.643 → 0.669, +4.0%) = $10,584 vs $7,500.",
+  "alternative": "Back Forty is weak because of its games, not access: game mix is already removed by the zone × game model, and the zone fell 31% when only the walkway changed.",
+  "limitation": "No past signage change to calibrate the effect; measured against the post-closure ratio with no other changes in the zone."
+ },
+ {
+  "id": "C13",
+  "tab": "plan",
+  "claim": "Moving the strongest games out of the Back Forty is a good long-run move but not a July one.",
+  "source": "pipeline/plan.py using zone (Z) and game (C) factors and machine intervals from the full model fit",
+  "result": "Gain/h = (Z_to − Z_from) × (C_strong − C_weak) ≈ $5–7 per pair; 8 candidate pairs ≈ $28,600 in July vs $28,800 cost, then ≈ $1,000/day.",
+  "alternative": "Regulars follow their game (sorting) — would halve the gain.",
+  "limitation": "Deferred to August so it does not confound the signage test."
+ }
+]

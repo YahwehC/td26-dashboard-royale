@@ -5092,22 +5092,28 @@
         "tier": "Base",
         "theo_pre_per_player_month": 94.277431,
         "theo_post_per_player_month": 95.73541,
-        "comp_cost_pre": 1.092393,
-        "comp_cost_post": 1.209161
+        "comp_cost_pre": 51607.9,
+        "comp_cost_post": 55198.2,
+        "comp_cost_pre_per_player_month": 1.092393,
+        "comp_cost_post_per_player_month": 1.209161
       },
       {
         "tier": "Gold",
         "theo_pre_per_player_month": 222.274685,
         "theo_post_per_player_month": 219.55961,
-        "comp_cost_pre": 3.634948,
-        "comp_cost_post": 3.416692
+        "comp_cost_pre": 12304.3,
+        "comp_cost_post": 11442.5,
+        "comp_cost_pre_per_player_month": 3.634948,
+        "comp_cost_post_per_player_month": 3.416692
       },
       {
         "tier": "Platinum",
         "theo_pre_per_player_month": 202.014582,
         "theo_post_per_player_month": 206.237604,
-        "comp_cost_pre": 2.687179,
-        "comp_cost_post": 2.829818
+        "comp_cost_pre": 733.6,
+        "comp_cost_post": 778.2,
+        "comp_cost_pre_per_player_month": 2.687179,
+        "comp_cost_post_per_player_month": 2.829818
       }
     ]
   },

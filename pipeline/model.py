@@ -38,8 +38,6 @@ K_GRID = [0, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 10**9]
 BOOT_N = 2000
 BOOT_SEED = 7
 
-TABLE_BLOCKS: list[str] = []
-
 
 # ----------------------------------------------------------------------------- io
 def load_daily() -> pd.DataFrame:
@@ -81,8 +79,9 @@ def apply_closure(df: pd.DataFrame, enabled: bool = True) -> pd.DataFrame:
 class ZCW:
     """IPF fit of th ~ ah * Z[zone] * C[cfg] * W[weekday] (U fixed at 1)."""
 
-    def __init__(self, df: pd.DataFrame):
+    def __init__(self, df: pd.DataFrame, label: str = "fit"):
         d = df.reset_index(drop=True)
+        self.label = label
         self.zcodes, zones = pd.factorize(d["level_zone"], sort=True)
         self.ccodes, cfgs = pd.factorize(d["config_id"], sort=True)
         self.wcodes, wds = pd.factorize(d["local_weekday"], sort=True)
@@ -106,7 +105,7 @@ class ZCW:
         z, c, w = self.zcodes, self.ccodes, self.wcodes
         ah, th = self.ah, self.th
         ah_sum = ah.sum()
-        for it in range(50):
+        for it in range(5000):
             old = np.concatenate([self.Z, self.C, self.W])
 
             # Z
@@ -135,6 +134,11 @@ class ZCW:
             self.iterations = it + 1
             if self.max_rel_change < 1e-9:
                 break
+        status = "converged" if self.max_rel_change < 1e-9 else "not converged"
+        print(
+            f"IPF {self.label}: {self.iterations} iterations, "
+            f"final max relative change {self.max_rel_change:.3e} ({status})"
+        )
 
     def effects(self, k: float) -> pd.DataFrame:
         """Machine effects e_m, t_m, U_m on the fitting frame."""
@@ -145,8 +149,8 @@ class ZCW:
         return pd.DataFrame({"e": e, "t": t, "U": (t + k) / (e + k)})
 
 
-def fit_zcw(df: pd.DataFrame) -> ZCW:
-    return ZCW(df)
+def fit_zcw(df: pd.DataFrame, label: str = "fit") -> ZCW:
+    return ZCW(df, label)
 
 
 def map_level(fit: ZCW, values: np.ndarray, mapping: dict, arr: np.ndarray, kind: str):
@@ -181,6 +185,9 @@ def predict_rates(df: pd.DataFrame, fit: ZCW, U: dict, closure: bool) -> tuple[p
         u_values = u.to_numpy()
     else:
         u_values = np.ones(len(d))
+    if unseen:
+        detail = ", ".join(f"{key} ({n} rows)" for key, n in sorted(unseen.items()))
+        raise ValueError(f"unseen target levels; 1.0 fallback is disabled: {detail}")
     num = d["ah"].to_numpy() * zf * cf * wf * u_values
     tmp = pd.DataFrame(
         {"machine_id": d["machine_id"].to_numpy(), "num": num, "ah": d["ah"].to_numpy()}
@@ -197,6 +204,7 @@ def score(pred: np.ndarray, actual: np.ndarray) -> dict:
         "mae": float(np.mean(np.abs(err))),
         "rmse": float(np.sqrt(np.mean(err**2))),
         "spearman": float(rho),
+        "bias": float(np.mean(err)),
     }
 
 
@@ -225,10 +233,9 @@ def section(title: str, table: str | None = None, note: str | None = None) -> st
         print(f"\n=== {title} ===")
         print(table)
         txt += "\n```\n" + table + "\n```\n"
-        TABLE_BLOCKS.append(table)
     if note:
         txt += "\n" + note + "\n"
-    return txt
+    return txt + "\n"
 
 
 # ---------------------------------------------------------------------- Model A
@@ -242,11 +249,21 @@ def model_a(df: pd.DataFrame) -> tuple[dict, str]:
     eligible = np.array(eligible)
     assert len(eligible) >= 290, f"eligible machines only {len(eligible)}"
 
-    # ---- inner validation: fit Jan-Feb, evaluate Mar-Apr
+    # ---- inner validation: fit Jan-Feb, evaluate Mar-Apr.
+    # B40 closure rows are outside the Jan-Feb support (their zone level is unseen),
+    # so drop them from the target set entirely: both predicted and actual rates are
+    # computed on the remaining target rows.
     inner_fit_raw = df[(df["gaming_date"] >= TRAIN_START) & (df["gaming_date"] <= pd.Timestamp("2025-02-28"))]
     inner_eval_raw = df[(df["gaming_date"] >= pd.Timestamp("2025-03-01")) & (df["gaming_date"] <= TRAIN_END)]
+    inner_eval_closure = (
+        (inner_eval_raw["zone_id"] == "Z-B40")
+        & (inner_eval_raw["gaming_date"] >= CLOSURE_START)
+        & (inner_eval_raw["gaming_date"] <= CLOSURE_END)
+    )
+    inner_closure_rows = int(inner_eval_closure.sum())
+    inner_eval_target = inner_eval_raw.loc[~inner_eval_closure]
     inner_fit_df = apply_closure(inner_fit_raw, enabled=True)
-    inner_eval_df = apply_closure(inner_eval_raw, enabled=True)
+    inner_eval_df = apply_closure(inner_eval_target, enabled=True)
 
     inner_fit_rows = inner_fit_df.groupby("machine_id").size()
     inner_eval_rows = inner_eval_df.groupby("machine_id").size()
@@ -256,7 +273,7 @@ def model_a(df: pd.DataFrame) -> tuple[dict, str]:
             & set(inner_eval_rows[inner_eval_rows >= 28].index)
         )
     )
-    fit_inner = fit_zcw(inner_fit_df)
+    fit_inner = fit_zcw(inner_fit_df, label="inner Jan-Feb")
     eval_df = inner_eval_df[inner_eval_df["machine_id"].isin(inner_elig)]
     base_rates, inner_unseen = predict_rates(eval_df, fit_inner, {}, closure=True)
     # predict_rates with an empty U uses factor 1.0 for every machine.
@@ -278,11 +295,15 @@ def model_a(df: pd.DataFrame) -> tuple[dict, str]:
     train_fit_df = apply_closure(train_all, enabled=True)
     assert train_fit_df["gaming_date"].max() <= TRAIN_END
     assert inner_fit_df["gaming_date"].max() <= TRAIN_END
-    fit_train = fit_zcw(train_fit_df)
+    fit_train = fit_zcw(train_fit_df, label="TRAIN Jan-Apr")
     train_eff = fit_train.effects(k)
+    train_eff0 = fit_train.effects(0)
     U_train = train_eff["U"].to_dict()
     hold_pred_df = hold_all[hold_all["machine_id"].isin(eligible)]
     pred_hold, hold_unseen = predict_rates(hold_pred_df, fit_train, U_train, closure=False)
+    pred_hold_noshrink, _ = predict_rates(
+        hold_pred_df, fit_train, train_eff0["U"].to_dict(), closure=False
+    )
 
     hold_agg = hold_all.groupby("machine_id").agg(ah=("ah", "sum"), th=("th", "sum"), hw=("hw", "sum"))
     train_agg = train_fit_df.groupby("machine_id").agg(
@@ -291,30 +312,57 @@ def model_a(df: pd.DataFrame) -> tuple[dict, str]:
     y_theo = (hold_agg["th"] / hold_agg["ah"]).reindex(eligible)
     y_hw = (hold_agg["hw"] / hold_agg["ah"]).reindex(eligible)
     pred_model = pred_hold.reindex(eligible).astype(float)
+    pred_noshrink = pred_hold_noshrink.reindex(eligible).astype(float)
     b_hw = (train_agg["hw"] / train_agg["ah"]).reindex(eligible).astype(float)
     b_theo = (train_agg["th"] / train_agg["ah"]).reindex(eligible).astype(float)
     train_total_hw = train_agg["hw"].reindex(eligible).astype(float)
 
     # ---- metrics
     metric_rows = []
-    for method, p in [("model", pred_model), ("B_hw_rate", b_hw), ("B_theo_rate", b_theo)]:
+    for method, p in [
+        ("model", pred_model),
+        ("model_noshrink", pred_noshrink),
+        ("B_hw_rate", b_hw),
+        ("B_theo_rate", b_theo),
+    ]:
         for target, y in [("y_theo", y_theo), ("y_hw", y_hw)]:
             s = score(p.to_numpy(), y.to_numpy())
             metric_rows.append({"method": method, "target": target, **s})
 
+    # ---- relative metrics (level-free): mean_m |pred_m/mean(pred) - y_m/mean(y)| * 100
+    relative_rows = []
+    relative_by = {}
+    for method, p in [
+        ("model", pred_model),
+        ("model_noshrink", pred_noshrink),
+        ("B_hw_rate", b_hw),
+        ("B_theo_rate", b_theo),
+    ]:
+        for target, y in [("y_theo", y_theo), ("y_hw", y_hw)]:
+            pv = p.to_numpy(float)
+            yv = y.to_numpy(float)
+            rel = np.abs(pv / pv.mean() - yv / yv.mean()) * 100.0
+            relative_by[(method, target)] = rel
+            relative_rows.append(
+                {"method": method, "target": target, "rel_error": float(rel.mean())}
+            )
+
     # ---- paired bootstrap over machines for MAE differences against y_theo
     rng = np.random.default_rng(BOOT_SEED)
     err_model = np.abs(pred_model.to_numpy() - y_theo.to_numpy())
+    err_noshrink = np.abs(pred_noshrink.to_numpy() - y_theo.to_numpy())
     err_hw = np.abs(b_hw.to_numpy() - y_theo.to_numpy())
     err_theo = np.abs(b_theo.to_numpy() - y_theo.to_numpy())
     n = len(eligible)
-    diffs_hw, diffs_theo = [], []
+    diffs_hw, diffs_theo, diffs_noshrink = [], [], []
     for _ in range(BOOT_N):
         idx = rng.integers(0, n, n)
         diffs_hw.append(float(np.mean(err_model[idx] - err_hw[idx])))
         diffs_theo.append(float(np.mean(err_model[idx] - err_theo[idx])))
+        diffs_noshrink.append(float(np.mean(err_noshrink[idx] - err_theo[idx])))
     diffs_hw = np.array(diffs_hw)
     diffs_theo = np.array(diffs_theo)
+    diffs_noshrink = np.array(diffs_noshrink)
 
     def boot_entry(label, d):
         return {
@@ -327,11 +375,46 @@ def model_a(df: pd.DataFrame) -> tuple[dict, str]:
     bootstrap = [
         boot_entry("MAE(model) - MAE(B_hw_rate), target=y_theo", diffs_hw),
         boot_entry("MAE(model) - MAE(B_theo_rate), target=y_theo", diffs_theo),
+        boot_entry(
+            "MAE(model_noshrink) - MAE(B_theo_rate), target=y_theo", diffs_noshrink
+        ),
+    ]
+
+    # ---- paired bootstrap of the relative error (level-free), target = y_theo
+    rng_rel = np.random.default_rng(BOOT_SEED)
+    rel_model = relative_by[("model", "y_theo")]
+    rel_hw = relative_by[("B_hw_rate", "y_theo")]
+    rel_theo = relative_by[("B_theo_rate", "y_theo")]
+    diffs_rel_hw, diffs_rel_theo = [], []
+    for _ in range(BOOT_N):
+        idx = rng_rel.integers(0, n, n)
+        diffs_rel_hw.append(float(np.mean(rel_model[idx] - rel_hw[idx])))
+        diffs_rel_theo.append(float(np.mean(rel_model[idx] - rel_theo[idx])))
+    diffs_rel_hw = np.array(diffs_rel_hw)
+    diffs_rel_theo = np.array(diffs_rel_theo)
+
+    def boot_rel_entry(label, d):
+        return {
+            "comparison": label,
+            "mean_rel_diff": float(d.mean()),
+            "ci95_low": float(np.percentile(d, 2.5)),
+            "ci95_high": float(np.percentile(d, 97.5)),
+        }
+
+    bootstrap_relative = [
+        boot_rel_entry(
+            "relative_error(model) - relative_error(B_hw_rate), target=y_theo",
+            diffs_rel_hw,
+        ),
+        boot_rel_entry(
+            "relative_error(model) - relative_error(B_theo_rate), target=y_theo",
+            diffs_rel_theo,
+        ),
     ]
 
     # ---- decision test
     # HOLD-only k=0 refit: index = actual theo / expected theo from location/game
-    hold_fit = fit_zcw(apply_closure(hold_all, enabled=False))
+    hold_fit = fit_zcw(apply_closure(hold_all, enabled=False), label="HOLD k=0 index")
     hold_eff = hold_fit.effects(0)
     hold_index = hold_eff["U"]  # t/e on HOLD rows, k=0
     hold_total_hw = hold_agg["hw"]
@@ -344,6 +427,7 @@ def model_a(df: pd.DataFrame) -> tuple[dict, str]:
         "B_hw_rate": b_hw.sort_values().index[:10],
         "B_theo_rate": b_theo.sort_values().index[:10],
         "model": u_train_elig.sort_values().index[:10],
+        "model_noshrink": train_eff0["U"].reindex(eligible).sort_values().index[:10],
         "model_pred_rate": pred_model.sort_values().index[:10],
     }
     decision = []
@@ -362,15 +446,36 @@ def model_a(df: pd.DataFrame) -> tuple[dict, str]:
 
     # ---- full-window fit (Jan-Jun, closure level kept)
     full_df = apply_closure(df, enabled=True)
-    fit_full = fit_zcw(full_df)
+    fit_full = fit_zcw(full_df, label="full Jan-Jun")
     full_eff = fit_full.effects(k)
     assert len(full_eff) == 310, f"full U list has {len(full_eff)} machines"
+
+    # Quasi-Poisson (overdispersed) interval: estimate phi on all full-window
+    # machine-day rows, mu = ah * Z * C * W * U from the full fit.
+    u_by_machine = full_eff["U"]
+    mu = (
+        fit_full.ah
+        * fit_full.Z[fit_full.zcodes]
+        * fit_full.C[fit_full.ccodes]
+        * fit_full.W[fit_full.wcodes]
+        * u_by_machine.reindex(fit_full.machine_id).to_numpy(float)
+    )
+    th_full = fit_full.th
+    n_rows = int(len(fit_full.ah))
+    n_params = int(
+        len(fit_full.zones) + len(fit_full.cfgs) + len(fit_full.wds) + len(full_eff)
+    )
+    assert np.isfinite(mu).all() and (mu > 0).all(), "non-positive full-window mu"
+    assert n_rows > n_params, f"n_rows {n_rows} <= n_params {n_params}"
+    phi = float(np.sum((th_full - mu) ** 2 / mu) / (n_rows - n_params))
+    assert np.isfinite(phi) and phi > 0, f"bad dispersion phi {phi}"
+
     full_u = []
     for mid in sorted(full_eff.index):
         e = float(full_eff.loc[mid, "e"])
         t = float(full_eff.loc[mid, "t"])
-        shape = t + k
-        rate = e + k
+        shape = (t + k) / phi
+        rate = (e + k) / phi
         lo = float(gamma.ppf(0.1, a=shape, scale=1.0 / rate)) if shape > 0 else 0.0
         hi = float(gamma.ppf(0.9, a=shape, scale=1.0 / rate)) if shape > 0 else 0.0
         full_u.append(
@@ -383,6 +488,10 @@ def model_a(df: pd.DataFrame) -> tuple[dict, str]:
                 "t": round(t, 4),
             }
         )
+    print(
+        f"\nFull-window quasi-Poisson dispersion phi = {phi:.6f} "
+        f"(n_rows = {n_rows}, n_params = {n_params})"
+    )
 
     # ---- holdout records
     hold_meta = (
@@ -419,13 +528,27 @@ def model_a(df: pd.DataFrame) -> tuple[dict, str]:
                 "mae": round(r["mae"], 6),
                 "rmse": round(r["rmse"], 6),
                 "spearman": round(r["spearman"], 6),
+                "bias": round(r["bias"], 6),
             }
             for r in metric_rows
+        ],
+        "metrics_relative": [
+            {
+                "method": r["method"],
+                "target": r["target"],
+                "rel_error": round(r["rel_error"], 6),
+            }
+            for r in relative_rows
         ],
         "bootstrap": [
             {**b, "mean_mae_diff": round(b["mean_mae_diff"], 6),
              "ci95_low": round(b["ci95_low"], 6), "ci95_high": round(b["ci95_high"], 6)}
             for b in bootstrap
+        ],
+        "bootstrap_relative": [
+            {**b, "mean_rel_diff": round(b["mean_rel_diff"], 6),
+             "ci95_low": round(b["ci95_low"], 6), "ci95_high": round(b["ci95_high"], 6)}
+            for b in bootstrap_relative
         ],
         "decision": [
             {
@@ -444,6 +567,7 @@ def model_a(df: pd.DataFrame) -> tuple[dict, str]:
             "C": {lvl: round(float(v), 8) for lvl, v in zip(fit_full.cfgs, fit_full.C)},
             "W": {lvl: round(float(v), 8) for lvl, v in zip(fit_full.wds, fit_full.W)},
             "U": full_u,
+            "phi": round(phi, 8),
         },
     }
 
@@ -453,18 +577,35 @@ def model_a(df: pd.DataFrame) -> tuple[dict, str]:
         [[f"{r['k']:.0f}", f"{r['inner_mae']:.4f}"] for r in k_rows],
     )
     met_table = render_table(
-        ["method", "target", "mae", "rmse", "spearman"],
+        ["method", "target", "mae", "rmse", "spearman", "bias"],
         [
-            [r["method"], r["target"], f"{r['mae']:.4f}", f"{r['rmse']:.4f}", f"{r['spearman']:.4f}"]
+            [r["method"], r["target"], f"{r['mae']:.4f}", f"{r['rmse']:.4f}",
+             f"{r['spearman']:.4f}", f"{r['bias']:+.4f}"]
             for r in metric_rows
         ],
-        align=["l", "l", "r", "r", "r"],
+        align=["l", "l", "r", "r", "r", "r"],
+    )
+    rel_table = render_table(
+        ["method", "target", "rel_error_%"],
+        [
+            [r["method"], r["target"], f"{r['rel_error']:.4f}"]
+            for r in relative_rows
+        ],
+        align=["l", "l", "r"],
     )
     boot_table = render_table(
         ["comparison", "mean_mae_diff", "ci95_low", "ci95_high"],
         [
             [b["comparison"], f"{b['mean_mae_diff']:+.4f}", f"{b['ci95_low']:+.4f}", f"{b['ci95_high']:+.4f}"]
             for b in bootstrap
+        ],
+        align=["l", "r", "r", "r"],
+    )
+    boot_rel_table = render_table(
+        ["comparison", "mean_rel_diff", "ci95_low", "ci95_high"],
+        [
+            [b["comparison"], f"{b['mean_rel_diff']:+.4f}", f"{b['ci95_low']:+.4f}", f"{b['ci95_high']:+.4f}"]
+            for b in bootstrap_relative
         ],
         align=["l", "r", "r", "r"],
     )
@@ -486,18 +627,60 @@ def model_a(df: pd.DataFrame) -> tuple[dict, str]:
         [[d["method"], ", ".join(d["ids"])] for d in decision],
         align=["l", "l"],
     )
+    low_hi = sorted(full_u, key=lambda r: r["hi80"])[:10]
+    low_hi_table = render_table(
+        ["machine_id", "U", "lo80", "hi80"],
+        [
+            [r["machine_id"], f"{r['U']:.6f}", f"{r['lo80']:.6f}", f"{r['hi80']:.6f}"]
+            for r in low_hi
+        ],
+        align=["l", "r", "r", "r"],
+    )
 
     txt = ""
     txt += section("Model A - k grid (inner: fit Jan-Feb, evaluate Mar-Apr)", k_table)
-    txt += section("Model A - HOLD metrics (307 eligible machines)", met_table)
+    txt += section(f"Model A - HOLD metrics ({len(eligible)} eligible machines)", met_table)
+    txt += section(
+        "Model A - HOLD relative metrics (mean |pred/mean(pred) - y/mean(y)|, %)",
+        rel_table,
+        note=(
+            "The May-Jun floor-wide theo level fell, which no TRAIN-only method can know, so "
+            "the absolute bias column shows a level error for every method. Relative error "
+            "divides each method's predictions and the actuals by their own mean across "
+            "machines, removing that common floor level. It isolates how well each method "
+            "ranks and sizes machines against each other, which is what the replacement "
+            "decision needs."
+        ),
+    )
     txt += section(
         "Model A - paired bootstrap (2000 resamples, seed 7), target = y_theo", boot_table
     )
+    txt += section(
+        "Model A - paired bootstrap of relative error (2000 resamples, seed 7), target = y_theo",
+        boot_rel_table,
+    )
     txt += section("Model A - decision test (10 lowest in TRAIN)", dec_table)
     txt += section("Model A - decision lists", ids_table)
+    txt += section(
+        f"Model A - full-window U: 10 lowest hi80 (quasi-Poisson, phi = {phi:.4f})",
+        low_hi_table,
+        note=(
+            f"Quasi-Poisson dispersion phi = {phi:.6f} estimated from all {n_rows} full-window "
+            f"machine-day rows with {n_params} parameters (Z+C+W levels plus machines); "
+            "shape = (t+k)/phi, rate = (e+k)/phi, 80% interval from gamma ppf(0.1/0.9). "
+            "This replaces the Poisson interval, which treated $1 of theo as one count and "
+            "was far too narrow."
+        ),
+    )
     notes = [
         f"Inner-validation eligible machines: {len(inner_elig)}; chosen k = {k} (MAE = {best['inner_mae']:.4f}).",
-        f"Full-window fit: {fit_full.iterations} IPF iterations, max relative change {fit_full.max_rel_change:.2e}.",
+        f"Inner-validation target excludes {inner_closure_rows} rows in the B40 closure window; "
+        "unseen target levels raise an error (no 1.0 fallback).",
+        "IPF iterations / final max relative change: "
+        f"inner {fit_inner.iterations} / {fit_inner.max_rel_change:.2e}, "
+        f"TRAIN {fit_train.iterations} / {fit_train.max_rel_change:.2e}, "
+        f"HOLD k=0 {hold_fit.iterations} / {hold_fit.max_rel_change:.2e}, "
+        f"full {fit_full.iterations} / {fit_full.max_rel_change:.2e}.",
     ]
     if inner_unseen:
         notes.append("Inner-validation unseen target levels (fallback 1.0): " + ", ".join(
@@ -512,6 +695,18 @@ def model_a(df: pd.DataFrame) -> tuple[dict, str]:
     notes.append(
         "HOLD index = HOLD actual theo / HOLD expected theo from a k=0 refit on HOLD rows "
         "(location/game/weekday adjusted, i.e. U computed on HOLD only)."
+    )
+    notes.append(
+        "`model` uses the chosen k, `model_noshrink` uses the same fit with k=0; both HOLD "
+        "forecasts use the TRAIN-fitted location/game/weekday effects."
+    )
+    notes.append(
+        "`model_pred_rate` ranks the same fitted model by predicted HOLD rate; the `model` row "
+        "ranks by U at the chosen k and `model_noshrink` by U at k=0 (location/game adjusted)."
+    )
+    notes.append(
+        "The HOLD k=0 refit is evaluation-only (used for the decision index); no HOLD forecast "
+        "uses HOLD outcomes."
     )
     txt += section("Model A - notes", note="\n".join("- " + x for x in notes))
 
@@ -553,7 +748,6 @@ def model_b() -> tuple[dict, str]:
         ev[c] = pd.to_datetime(ev[c])
 
     train = prop[(prop["gaming_date"] >= TRAIN_START) & (prop["gaming_date"] <= TRAIN_END)]
-    test = prop[(prop["gaming_date"] >= HOLD_START) & (prop["gaming_date"] <= HOLD_END)]
     y_train = train["y"].to_numpy()
     b_const_val = float(y_train.mean())
     wd_mean = train.groupby("local_weekday")["y"].mean()
@@ -750,13 +944,23 @@ def main() -> None:
     OUT_JSON.write_text(json.dumps(obj, indent=2), encoding="utf-8")
 
     # ---- assertions (printed PASS lines)
+    inner_fit_max = df[
+        (df.gaming_date >= TRAIN_START) & (df.gaming_date <= pd.Timestamp("2025-02-28"))
+    ].gaming_date.max()
+    train_fit_max = df[
+        (df.gaming_date >= TRAIN_START) & (df.gaming_date <= TRAIN_END)
+    ].gaming_date.max()
+    hold_min = df[df.gaming_date >= HOLD_START].gaming_date.min()
+    leak_ok = bool(
+        inner_fit_max <= TRAIN_END and train_fit_max <= TRAIN_END and hold_min > TRAIN_END
+    )
     checks = [
         (
             f"no TRAIN-fitted quantity reads rows after {TRAIN_END.date()}: "
-            f"inner fit max {df[(df.gaming_date >= TRAIN_START) & (df.gaming_date <= pd.Timestamp('2025-02-28'))].gaming_date.max().date()}, "
-            f"TRAIN fit max {df[(df.gaming_date >= TRAIN_START) & (df.gaming_date <= TRAIN_END)].gaming_date.max().date()}, "
-            f"HOLD prediction starts {df[(df.gaming_date >= HOLD_START)].gaming_date.min().date()}",
-            True,
+            f"inner fit max {inner_fit_max.date()}, "
+            f"TRAIN fit max {train_fit_max.date()}, "
+            f"HOLD prediction starts {hold_min.date()}",
+            leak_ok,
         ),
         (f"eligible_n = {a['eligible_n']} (>= 290)", a["eligible_n"] >= 290),
         (f"full-window U list has {len(a['full']['U'])} machines (== 310)", len(a["full"]["U"]) == 310),

@@ -1,5 +1,5 @@
 import duckdb, sys, os
-os.chdir(r"F:\CYH\projects\datathon\challenges\dashboard-royale\data-repo\data")
+os.chdir(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data-repo", "data"))
 con = duckdb.connect()
 for t,f in [("pdv","1_prepared_views/prepared_daily_view"),("pd","1_prepared_views/property_day"),("pp","1_prepared_views/player_period"),
             ("md","2_machine_decision/machine_day"),("gm","2_machine_decision/game_math"),("ops","2_machine_decision/operations"),

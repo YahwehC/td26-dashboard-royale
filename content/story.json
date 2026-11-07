@@ -1,0 +1,89 @@
+{
+ "verdict": {
+  "title": "Luck, location, or a leak?",
+  "question": "The GM wants to replace the 10 machines that earned the least in Jan–Jun 2025. Are they really bad machines?",
+  "answer": "<b>No — none of the GM's 10 is a weak machine.</b> Nine sit in the <b>Back Forty</b>, the floor's quietest zone (≈40% less play per open hour than the floor average, and a further −31% while its walkway was closed in March). Six run <b>low-hold games</b> (Royal Draw 95% RTP, Comet Cash 92%) that earn little anywhere on the floor. Three were on the floor only part of the period — two of them are <b>already retired</b>. Once location, game and exposure are accounted for, all ten earn within ±10% of what their spot predicts. One is different: <b>M-1158 pays out far more often than its game allows</b> (38.6% hit rate vs 31.5% configured, z = +124) — a leak to inspect, not a machine to replace. <br><br><b>Recommendation:</b> don't replace the ten. Spend $23,700 of the $100,000: inspect M-1158, fix the Back Forty's access with new signs, run one measured promotion weekend — and keep $76,300.",
+  "notes": [
+   "Change the period or pick a zone/bank in the bar above: every number on this page is recomputed in your browser.",
+   "Luck = house win − theo (expected win). z = luck ÷ its standard deviation, computed exactly from the bets (Σ bet² × the game's payout variance). |z| > 2 happens to ~5% of machines by chance.",
+   "Machine index = actual theo ÷ the theo its zone and game predict for its open hours (1.00 = exactly as expected). It uses theo, so slot luck is already removed."
+  ]
+ },
+ "machines": {
+  "title": "Q1 · Which machines are truly underperforming?",
+  "question": "After removing luck (theo instead of house win), exposure (per open hour) and location and game (zone × game model), which machines are still weak?",
+  "answer": "Location and game explain almost everything: each machine's theo per open hour is predicted by <b>zone × game</b> with a typical error of ~6%. Game factors are the same in every zone (Royal Draw earns 0.55–0.59× average in all six zones), which is why we treat them as multiplicative. The machines that are weak <i>for their spot</i> (index ≈ 0.81–0.90, e.g. M-1184, M-1244, M-1286) are not on the GM's list, and they stayed weak in May–June (see Model). Slot luck is real but ordinary: 20 of 310 machines have |z| > 2 (≈15 expected by chance). Only <b>M-1158</b> fails the payout test.",
+  "notes": [
+   "Hit-rate test: spins that pay anything follow a binomial with the game's published hit probability; |z| ≥ 5 is not luck (safe even after testing 310 machines).",
+   "An unusual payout pattern is a reason to inspect, not evidence of wrongdoing."
+  ]
+ },
+ "demand": {
+  "title": "Q2 · What changed in demand, and why?",
+  "question": "How did play move across the six months and across the floor?",
+  "answer": "Floor coin-in peaked in February ($1.41M/day) and was lowest in June ($1.32M/day, −4% vs Jan–Apr), in step with Las Vegas: city visitors fell 7% in June and convention attendance dropped by a third (LVCVA, real data). Saturdays bring 1.6× a Tuesday. Big weekends lift the floor: Super Bowl +24%, college-basketball opening rounds +20%, our own Winter Slot Tournament +19%, EDC +13%; conventions barely move it (+1–4%). The largest local shock was the <b>walkway closure from the main entrance to the Back Forty (Mar 3 – Apr 7)</b>: the zone's play per open hour fell from 0.67× to 0.46× the rest of the floor — about <b>$163,000 of expected win lost</b> — and recovered only to 0.64× afterwards. The 8 Aurora Link machines added on Mar 24 earn 1.37× an average game with no novelty fade.",
+  "notes": [
+   "Traffic counters count crossings, not people, and offline hours are excluded (not zero).",
+   "LVCVA figures describe all Las Vegas visitors and were published after 2025, so they are context, not model inputs."
+  ]
+ },
+ "downtime": {
+  "title": "Q3 · How much play was lost to downtime, and when?",
+  "question": "How many machine-hours were down, what were they worth, and what drives it?",
+  "answer": "Machines were down <b>5,021 hours</b> (1,207 faults), worth about <b>$99,000 of expected win — 0.42% of theo</b>. That is an upper bound, but a tight one: when a machine is down, its bank neighbours get only ~1% more play, so players mostly don't substitute. <b>Ridgeline</b> cabinets cause 55% of the loss with 30% of the machines. Repairs start fast when the shift is fully staffed (≈0.6 h), but wait <b>2.0–2.6 h</b> on short-staffed day/swing shifts (April–May absences) and on the one-tech grave shift; each technician on shift cuts the wait by ~1.8 h. Downtime is real but small money, so we do not spend on it now (see Plan).",
+  "notes": [
+   "Lost theo = down hours × the machine's own theo per open hour at that hour of day.",
+   "Night hours are worth ~$15 per machine-hour, which is why an extra grave-shift tech does not pay back in 30 days."
+  ]
+ },
+ "players": {
+  "title": "Q4 · What did tracked players wager, get back and net?",
+  "question": "Card holders only — how concentrated are the results?",
+  "answer": "113,890 card holders wagered $163.8M and got back $148.2M: as a group they <b>lost $15.6M</b>, almost exactly their theo ($15.5M) — the house did not get lucky with carded play. Only <b>13.6% of players finished ahead</b>. Results are very concentrated: the top 1% of players generate 23% of theo and the top 10% generate 66%; the top 10% of losers account for ~80% of all net losses.",
+  "notes": [
+   "Player tables cover carded play only (~66% of coin-in); uncarded play is invisible at the person level.",
+   "Responsible gaming: we do not propose any action that targets the heaviest losers. The promotion is open to all guests and is not based on losses; self-excluded guests stay excluded."
+  ]
+ },
+ "comps": {
+  "title": "Q5 · What did the comp program cost, and did anything change?",
+  "question": "How much did comps cost relative to theo, and what happened on May 1?",
+  "answer": "Comps cost the house <b>$191,000</b> at cost of goods ($683,000 menu value) — about <b>1.2% of tracked theo</b>. On <b>May 1</b> the price of a comp fell from <b>13.1 to 5.8 points per comp dollar</b> (comps became 2.3× cheaper in points). Points redeemed halved, comp cost rose ~10% a month and reinvestment went from 1.1% to 1.3% of theo. Carded coin-in grew <b>2.8% more than uncarded</b> after the change (95% CI 0.5–5.2%; the same test on Jan–Feb vs Mar–Apr gives −0.8%, i.e. no effect) — but theo per active player per month barely moved, so it may be <i>more card use</i> rather than more play. Only a randomized comp pilot can separate the two.",
+  "notes": [
+   "Comp cost is already inside POS cost of goods; it is subtracted once.",
+   "Face value is menu price, not revenue."
+  ]
+ },
+ "plan": {
+  "title": "Q6 · How we would spend $100,000 (July 1–30, 2025)",
+  "question": "Each cause needs a different fix. What is worth funding, and how will we know it worked?",
+  "answer": "We fund three actions for <b>$23,700</b> and <b>keep $76,300</b>: most low earnings come from location, game math and luck — replacing machines would not fix them. Each action matches a cause we found: a <b>leak</b> (inspect M-1158), a <b>location</b> problem (Back Forty signs) and <b>demand</b> that responds to events (one promotion weekend). Expected extra win in July: ~$69,000 (range $30,000–$105,000).",
+  "notes": [
+   "Costs follow the guide: quantity × (unit cost + daily cost × days after lead time). Benefits count only the days after the lead time.",
+   "Benefits are expected house win (theo); actual July results will include luck."
+  ]
+ },
+ "model": {
+  "title": "Model · Does adjusting for location and game predict the future better?",
+  "question": "Fit on Jan–Apr only, test on May–Jun: which ranking would the GM regret?",
+  "answer": "Our model (theo per open hour = zone × game × weekday × machine effect, with shrinkage chosen by an inner Jan–Feb → Mar–Apr validation) predicts each machine's May–June earning rate with a <b>relative error of 3.1%</b>, vs 3.8% for the machine's own luck-free history and <b>11.7% for its raw house win</b> (the GM's logic). In dollars, all methods over-forecast by ~$1/hour because the whole floor slowed in May–June, which no Jan–Apr method could know — there the machine's own theo history is slightly better (MAE $1.06 vs $1.26 per hour). The decision test is the point: the GM's 10 had an <b>average</b> location-adjusted index in May–June (1.01) and none of them was among the truly weakest 10; the model's 10 stayed weak (0.90) and 4 of them were.",
+  "notes": [
+   "No leakage: everything used for a holdout prediction is fitted on rows dated ≤ Apr 30; the walkway closure (known and over by May 1) has its own level.",
+   "Model B (floor coin-in by weekday) beats a constant mean (MAE $69k vs $218k per day, May–Jun) and is the frozen counterfactual we use to measure the promotion weekend."
+  ]
+ },
+ "evidence": {
+  "title": "Claims & evidence",
+  "question": "Every claim on this dashboard, where it comes from, and what else could explain it.",
+  "answer": "Each row names the table and computation, the result, the competing explanation we tested and the limitation. All code is in the repository (<code>pipeline/</code>).",
+  "notes": [
+   "Data: TAMU Datathon 'Dashboard Royale' release 0.9.0-draft. The casino and its guests are fictional; only 4_context/real_sources is real public data (LVCVA, NOAA, Missouri Gaming Commission)."
+  ]
+ },
+ "ai": {
+  "title": "AI use disclosure",
+  "question": "",
+  "answer": "We used AI assistants: Claude (Anthropic) planned the analysis, chose methods, wrote specifications, reviewed results and drafted the text; DeepSeek wrote and ran the data-extraction, analysis, model and dashboard code from those specifications; Codex (OpenAI) reviewed the money math. Every number shown is produced by the scripts in the repository and was checked against the raw tables. Team members reviewed the findings and recorded the video.",
+  "notes": []
+ }
+}
