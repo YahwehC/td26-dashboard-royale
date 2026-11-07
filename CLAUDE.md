@@ -66,5 +66,5 @@ Ideas to adopt: funnel/control-band chart, industry terms (actual-to-theo index,
 - [x] Data, analysis, model, plan, dashboard (all 9 tabs checked in browser; period/zone/bank filters; mobile no overflow)
 - [x] Write-up, appendix, video script, checklist
 - [x] Pushed to private repo (push only, per parent). Funnel chart + chart-width fix + prior-work appendix section added after research.
-- [ ] Make public + enable Pages (waiting for user OK via parent) → test public link
+- [ ] Make public + enable Pages: user said NOT yet (Nov 7, "still working") — keep private, no Devpost submit until told
 - [ ] User: record video, fill Devpost
