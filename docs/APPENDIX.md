@@ -139,6 +139,17 @@ Sensitivity:
 - Inspection finds nothing, promotion and signs MID: benefit $63,540 vs cost $23,700
 - Promotion only at the weak Locals-week lift, no seasonality discount: benefit $28,963 vs cost $15,000
 
+## Prior work and industry practice (checked before finalising)
+
+We found no earlier public Dashboard Royale entry or open slot-floor dashboard to reuse. Our methods follow standard practice:
+
+- **Actual-to-theoretical index and control bands** instead of a fixed hold-% threshold; check machine → game → zone → property. Five causes of a hold gap are checked in order: luck, wrong game-mix theo, jackpot accounting, meter fault, integrity (casinomanagers.net, *Theoretical hold vs actual hold*). For M-1158 the hit-rate test rules out luck (z = +124) and its theo uses its own game's RTP; the inspection checks the remaining three (jackpot accounting, meters, configuration/integrity).
+- **Lost theo from downtime** = down hours × comparable theo per hour, and some play moves to neighbouring machines (casinomanagers.net, *Slot machine performance metrics*). We measured that shift: about +1% neighbour occupancy, so our downtime loss is an upper bound.
+- **Win per unit per day (WPUPD) against the house average** is the usual floor KPI (calbizjournal.com, *Slot machine management*). Our machine index U is a location- and game-adjusted version of that index.
+- **Location + game features explain most unit volume.** Lucas & Dunn (2005, *J. Hospitality & Tourism Research*, doi:10.1177/1096348004273427) explain 64%. Lucas & Kim (*UNLV Gaming Research & Review Journal* 29(1)) find that layout order changes daily theo win by about 21%, so which machine goes where must be tested, not assumed. That is one reason the machine swaps are deferred.
+- **Funnel plot** with exact-variance limits, as in FunnelPlotR (NHS-R community), on the Machines tab.
+- Operators rank machines on net contribution, so the Machines tab also shows house win minus lease, service, power and repair cost; replacement is priced from `action_catalog`.
+
 ## Methods in one paragraph each
 
 **Luck.** Machine-day house win vs theo (Σ bet × (1 − configured RTP)). The variance of a day's house win is Σ bet² × the game's payout-multiplier variance (`machine_day.sum_bet_squared` × `game_math.payout_multiplier_variance`), so luck z = (house win − theo) / √Σvariance is exact, not assumed.

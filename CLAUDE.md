@@ -65,5 +65,6 @@ Ideas to adopt: funnel/control-band chart, industry terms (actual-to-theo index,
 ## Status (Nov 7, ~13:00)
 - [x] Data, analysis, model, plan, dashboard (all 9 tabs checked in browser; period/zone/bank filters; mobile no overflow)
 - [x] Write-up, appendix, video script, checklist
-- [ ] Push latest to YahwehC/td26-dashboard-royale, make public, enable Pages (needs user OK) → test public link
+- [x] Pushed to private repo (push only, per parent). Funnel chart + chart-width fix + prior-work appendix section added after research.
+- [ ] Make public + enable Pages (waiting for user OK via parent) → test public link
 - [ ] User: record video, fill Devpost

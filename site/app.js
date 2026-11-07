@@ -602,6 +602,7 @@ function computeAll(lo, hi) {
       hi80,
       luck,
       zLuck,
+      sdLuck: a.v > 0 ? Math.sqrt(a.v) : null,
       hitZ,
       exposure,
       location,
@@ -787,6 +788,11 @@ function plotInto(node, figure, ariaLabel) {
   node.setAttribute('aria-label', ariaLabel || 'Chart');
   window.Plotly.newPlot(node, figure.data, figure.layout, {
     displayModeBar: false, responsive: true, scrollZoom: false
+  });
+  // Charts are often built before their card is attached (e.g. inside a grid appended later),
+  // so Plotly falls back to 700px. Resize once the node is in the layout.
+  requestAnimationFrame(() => {
+    if (node.isConnected && node.clientWidth && window.Plotly.Plots) window.Plotly.Plots.resize(node);
   });
 }
 
@@ -1471,48 +1477,61 @@ RENDERERS.machines = function renderMachines(root, res) {
     })
   });
 
-  const funnelRows = res.perMachine.filter(r => r.zLuck !== null);
+  const funnelRows = res.perMachine.filter(r => r.zLuck !== null && r.th > 0 && r.sdLuck > 0);
   chartCard(grid1, {
-    title: 'The luck funnel: a handful of machines sit outside ±1.96 standard deviations',
-    how: 'Theo is on the x-axis and the luck z-score is on the y-axis. The dashed lines are the 95% band; points outside them had house-win swings that are hard to explain as ordinary slot variance.',
-    source: 'core.json md (theo, house win, v), core.json configs (variance multiplier)',
+    title: (() => {
+      const gmIn = funnelRows.filter(r => gmIds.has(r.id) && Math.abs(r.zLuck) <= 1.96).length;
+      const far = funnelRows.filter(r => Math.abs(r.zLuck) > 3).map(r => r.id);
+      return 'Luck funnel: ' + gmIn + ' of the GM\'s bottom ten sit inside the 95% band; outside 99.7%: ' +
+        (far.length ? far.slice(0, 3).join(', ') + (far.length > 3 ? ' +' + (far.length - 3) : '') : 'none');
+    })(),
+    how: 'Each dot is a machine: actual-to-theoretical index (house win ÷ theo) against theo. The funnel is the 95% and 99.7% control band from each machine\'s exact payout variance (Σ bet² × game variance); it narrows as volume grows, so small machines are allowed bigger swings. Dots outside the funnel are not ordinary luck.',
+    source: 'core.json md (theo, house win, Σ bet²), core.json configs (payout-multiplier variance). Method: funnel plot with exact variance; actual-to-theoretical index as used in slot-floor management.',
     height: 390,
     build: () => {
-      const inside = funnelRows.filter(r => inScope(r));
-      const outside = funnelRows.filter(r => !inScope(r));
-      const data = [];
-      if (outside.length) {
-        data.push({
-          type: 'scatter', mode: 'markers', x: outside.map(r => r.th), y: outside.map(r => r.zLuck),
-          name: 'Outside scope', marker: { color: t.muted, size: 5, opacity: 0.28 },
-          text: outside.map(r => r.id),
-          hovertemplate: '%{text}<br>Theo $%{x:,.0f}<br>Luck z %{y:.2f}<extra></extra>'
-        });
-      }
-      data.push({
-        type: 'scatter', mode: 'markers', x: inside.map(r => r.th), y: inside.map(r => r.zLuck),
-        name: 'Machines', marker: { color: t.cat[0], size: 6, opacity: 0.65 },
-        text: inside.map(r => r.id),
-        hovertemplate: '%{text}<br>Theo $%{x:,.0f}<br>Luck z %{y:.2f}<extra></extra>'
-      });
-      data.push({
-        type: 'scatter', mode: 'lines', x: [0, Math.max(1, ...funnelRows.map(r => r.th))],
-        y: [1.96, 1.96], name: '+1.96 sd', line: { color: t.axis, width: 2, dash: 'dot' },
-        hoverinfo: 'skip'
-      });
-      data.push({
-        type: 'scatter', mode: 'lines', x: [0, Math.max(1, ...funnelRows.map(r => r.th))],
-        y: [-1.96, -1.96], name: '−1.96 sd', line: { color: t.axis, width: 2, dash: 'dot' },
-        hoverinfo: 'skip'
-      });
+      const idx = r => r.hw / r.th;
+      // typical sd per sqrt(theo): sd ≈ c·sqrt(theo) for comparable bet sizes and game volatility
+      const ratios = funnelRows.map(r => r.sdLuck / Math.sqrt(r.th)).sort((a, b) => a - b);
+      const c = ratios.length ? ratios[Math.floor(ratios.length / 2)] : 0;
+      const ths = funnelRows.map(r => r.th);
+      const xMin = Math.max(1, Math.min(...ths) * 0.8), xMax = Math.max(...ths) * 1.1;
+      const xs = [];
+      for (let i = 0; i <= 80; i++) xs.push(xMin * Math.pow(xMax / xMin, i / 80));
+      const band = z => xs.map(x => 1 + z * c / Math.sqrt(x));
+      const hover = '%{text}<br>Theo $%{x:,.0f}<br>Actual ÷ theo %{y:.2f}<br>Luck z %{customdata:.2f}<extra></extra>';
+      const pts = (rows, name, marker, extra) => Object.assign({
+        type: 'scatter', mode: 'markers', x: rows.map(r => r.th), y: rows.map(idx),
+        customdata: rows.map(r => r.zLuck), text: rows.map(r => r.id), name, marker, hovertemplate: hover
+      }, extra || {});
+      const base = funnelRows.filter(r => !gmIds.has(r.id) && !leakIds.has(r.id));
+      const data = [
+        { type: 'scatter', mode: 'lines', x: xs, y: band(3), name: '99.7% band', line: { color: t.axis, width: 1, dash: 'dot' }, hoverinfo: 'skip' },
+        { type: 'scatter', mode: 'lines', x: xs, y: band(-3), showlegend: false, line: { color: t.axis, width: 1, dash: 'dot' }, hoverinfo: 'skip' },
+        { type: 'scatter', mode: 'lines', x: xs, y: band(1.96), name: '95% band', line: { color: t.axis, width: 2, dash: 'dash' }, hoverinfo: 'skip' },
+        { type: 'scatter', mode: 'lines', x: xs, y: band(-1.96), showlegend: false, line: { color: t.axis, width: 2, dash: 'dash' }, hoverinfo: 'skip' }
+      ];
+      const baseIn = base.filter(r => inScope(r)), baseOut = base.filter(r => !inScope(r));
+      if (baseOut.length) data.push(pts(baseOut, 'Outside scope', { color: t.muted, size: 5, opacity: 0.28 }));
+      data.push(pts(baseIn, 'Machines', { color: t.cat[0], size: 6, opacity: 0.6 }));
+      const gmRows = funnelRows.filter(r => gmIds.has(r.id) && !leakIds.has(r.id));
+      if (gmRows.length) data.push(pts(gmRows, 'GM bottom 10', { color: t.cat[1], size: 9, symbol: 'diamond' }));
+      const lk = funnelRows.filter(r => leakIds.has(r.id));
+      if (lk.length) data.push(pts(lk, 'Leak (hit-rate |z| ≥ 5)', { color: t.critical, size: 11, symbol: 'x' },
+        { mode: 'markers+text', textposition: 'top center', textfont: { color: t.critical, size: 10 } }));
+      const ys = funnelRows.map(idx);
       return {
         data,
         layout: baseLayout({
           showlegend: true,
-          margin: { l: 62, r: 16, t: 12, b: 58 },
-          xaxis: { title: { text: 'Theoretical win in period ($)' } },
-          yaxis: { title: { text: 'Luck z = (house win − theo) / sd' }, zerolinecolor: t.axis },
-          legend: { orientation: 'h', y: -0.25 }
+          margin: { l: 62, r: 16, t: 12, b: 62 },
+          xaxis: (() => {
+            const tv = [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5, 2e5, 5e5, 1e6].filter(v => v >= xMin && v <= xMax);
+            return { title: { text: 'Theoretical win in period ($, log scale)' }, type: 'log', range: [Math.log10(xMin), Math.log10(xMax)],
+                     tickvals: tv, ticktext: tv.map(v => '$' + (v >= 1e6 ? v / 1e6 + 'M' : v / 1e3 + 'k')) };
+          })(),
+          yaxis: { title: { text: 'Actual ÷ theo index' },
+                   range: [Math.min(0, ...ys) - 0.05, Math.max(2, ...ys) + 0.05] },
+          legend: { orientation: 'h', y: -0.28 }
         })
       };
     },
@@ -1520,6 +1539,7 @@ RENDERERS.machines = function renderMachines(root, res) {
       columns: [
         { label: 'Machine', get: r => r.id },
         { label: 'Theo $', num: true, get: r => r.th, fmt: v => fmtMoney(v) },
+        { label: 'Actual ÷ theo', num: true, get: r => r.hw / r.th, fmt: v => fmtNum(v, 2) },
         { label: 'Luck $', num: true, get: r => r.luck, fmt: v => fmtSignedMoney(v) },
         { label: 'Luck z', num: true, get: r => r.zLuck, fmt: v => fmtNum(v, 2) }
       ],

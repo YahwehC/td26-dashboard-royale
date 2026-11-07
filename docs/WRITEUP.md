@@ -1,10 +1,10 @@
 # Luck, Location, or a Leak? — The Gilded Ace, Jan–Jun 2025
 
-**Question.** The GM wants to replace the 10 lowest-earning machines. We tested three explanations first.
+**Question.** The GM wants to replace the 10 lowest-earning machines. We tested three explanations.
 
-**Luck.** We compare house win with theo (expected win); each machine's luck z-score uses the exact variance of its own bets (Σ bet² × payout variance). Luck is ordinary: 20 of 310 machines beyond ±2σ, as chance predicts.
+**Luck.** Each machine's actual-to-theo index (house win ÷ expected win) gets a control band from the exact variance of its own bets (Σ bet² × payout variance). Luck is ordinary: 20 of 310 machines beyond ±2σ, as chance predicts.
 
-**Location.** Theo per open hour is explained by *zone × game*. Game factors are identical in every zone (Royal Draw earns 0.55–0.59× average everywhere), and the **Back Forty** earns ~40% less per hour than the floor. A natural experiment proves access matters: while the main-entrance walkway was closed (Mar 3–Apr 7) Back Forty play fell another 31% — **$163,000** of expected win — and never fully recovered.
+**Location.** Theo per open hour is explained by *zone × game*. Game factors are identical in every zone (Royal Draw earns 0.55–0.59× average everywhere), and the **Back Forty** earns ~40% less per hour than the floor. Access matters: while the main-entrance walkway was closed (Mar 3–Apr 7) Back Forty play fell another 31% — **$163,000** of expected win — and never fully recovered.
 
 **Leak.** A binomial hit-rate test against each game's published hit probability flags one machine: **M-1158 pays on 38.6% of spins vs 31.5% configured (z = +124)**, holding 3% instead of 10%.
 
