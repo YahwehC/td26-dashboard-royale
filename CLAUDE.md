@@ -22,12 +22,12 @@ User speaks Chinese → answer in Chinese. Code/specs in English.
 - Local preview: `.venv/Scripts/python -m http.server 8790 --directory site`.
 
 ## Key findings (all reproducible from pipeline/)
-- GM's bottom-10 (lowest total house win): 9 in Back Forty (zone rate $12.4 vs 15.5–21.5/open h), 6 low-hold games
+- GM's bottom-10 (lowest total house win): 9 in Back Forty (zone rate $12.4 vs 15.5–21.5/open h), 8 low-hold games
   (Royal Draw 95%, Comet Cash 92%), 3 partial exposure (M-1118, M-1120 retired; M-5076 installed May 13);
   machine index U 0.95–1.10 → none truly weak.
 - Leak: M-1158 hit rate 38.6% vs 31.5% (z=+124), hold 3% vs 10%, luck −$36k.
 - Exact luck variance: Σ bet² × payout_multiplier_variance; z SD ≈ 1.09 across machines (luck is ordinary).
-- Walkway W-ENT-B40 closed Mar 3–Apr 7: B40/rest ratio 0.669 → 0.461 → 0.643; lost $163k theo.
+- Walkway W-ENT-B40 closed Mar 3–Apr 6 (gaming days): B40/rest ratio 0.669 → 0.461 → 0.643; lost $163k theo.
 - Downtime 5,021 h, $98.9k theo (0.42%); substitution ≈ +1% neighbour occupancy; Ridgeline 55% of loss;
   short-staffed shifts wait 2.0–2.6 h vs 0.6–0.7 h; −1.8 h per extra tech.
 - Comps: May 1 points per comp $ 13.1 → 5.8; reinvestment 1.1% → 1.3%; DiD carded vs uncarded +2.8% [0.5, 5.2], placebo −0.8%.

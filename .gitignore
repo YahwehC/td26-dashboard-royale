@@ -15,3 +15,7 @@ pip-*/
 .env.*
 *.whl
 .claude/
+
+# local audit helper (hardcoded quotes go stale after text fixes)
+pipeline/audit_claims.py
+docs/evidence/claim_audit.md

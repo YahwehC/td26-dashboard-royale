@@ -4,11 +4,11 @@
 
 **Luck.** Each machine's actual-to-theo index (house win ÷ expected win) gets a control band from the exact variance of its own bets (Σ bet² × payout variance). Luck is ordinary: 20 of 310 machines beyond ±2σ, as chance predicts.
 
-**Location.** Theo per open hour is explained by *zone × game*. Game factors are identical in every zone (Royal Draw earns 0.55–0.59× average everywhere), and the **Back Forty** earns ~40% less per hour than the floor. Access matters: while the main-entrance walkway was closed (Mar 3–Apr 7) Back Forty play fell another 31% — **$163,000** of expected win — and never fully recovered.
+**Location.** Theo per open hour is explained by *zone × game*. Game factors are identical in every zone (Royal Draw earns 0.55–0.59× average everywhere), and the **Back Forty** earns ~40% less per hour than the floor. Access matters: while the main-entrance walkway was closed (Mar 3–Apr 6) Back Forty play fell another 31% — **$163,000** of expected win — and never fully recovered.
 
 **Leak.** A binomial hit-rate test against each game's published hit probability flags one machine: **M-1158 pays on 38.6% of spins vs 31.5% configured (z = +124)**, holding 3% instead of 10%.
 
-**Verdict.** None of the GM's 10 is a weak machine: 9 are in the Back Forty, 6 run low-hold games, 3 were on the floor only part of the period (2 are already retired), and all earn within ±10% of what their spot predicts. M-1158 needs an inspection, not a replacement.
+**Verdict.** None of the GM's 10 is a weak machine: 9 are in the Back Forty, 8 run low-hold games, 3 were on the floor only part of the period (2 are already retired), and all earn within ±10% of what their spot predicts. M-1158 needs an inspection, not a replacement.
 
 **Model.** Trained on Jan–Apr and tested on May–Jun, our zone × game × weekday × machine model predicts machines' relative earning rates with 3.1% error vs 11.7% for raw house win. The GM's list had an average May–Jun adjusted index (1.01) and none was among the truly weakest 10; the model's list stayed weak (0.90). A weekday forecast of floor coin-in (MAE $69k/day vs $218k for a constant) is the frozen baseline for measuring promotions.
 

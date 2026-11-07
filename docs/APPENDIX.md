@@ -9,7 +9,7 @@ Every number below is produced by the scripts in `pipeline/` (see the README for
 ### C1 — None of the GM's bottom-10 (lowest total house win) is a weak machine.
 
 - **Table / query:** prepared_daily_view + machine_day + game_math; zone × game IPF fit (pipeline/model.py full fit; recomputed in app.js for any period)
-- **Result:** 9/10 in Back Forty (zone rate $12.4 vs $15.5–21.5 per open hour elsewhere); 6/10 low-hold games (game factor 0.55–0.68); 3/10 on the floor 49–132 days; machine index 0.95–1.10 for all ten.
+- **Result:** 9/10 in Back Forty (zone rate $12.4 vs $15.2–21.5 per open hour elsewhere); 8/10 low-hold games (game factor 0.56–0.68); 3/10 on the floor 49–132 days; machine index 0.95–1.10 for all ten.
 - **Alternative explanation tested:** Bad luck: luck z of the ten ranges −2.4 to +0.6 except M-1158 (−4.6), so luck adds to the shortfall but does not create it. Downtime: availability 99.5–99.9% for all ten.
 - **Limitation:** Zone × game is a fitted structure; a machine's own appeal and its slot within a bank cannot be fully separated without moving it.
 - **Dashboard tab:** `verdict`
@@ -30,7 +30,7 @@ Every number below is produced by the scripts in `pipeline/` (see the README for
 - **Limitation:** Observational; the swap plan is designed as a measured test.
 - **Dashboard tab:** `machines`
 
-### C4 — The Mar 3–Apr 7 walkway closure cut Back Forty play by about a third and cost ~$163,000 of expected win.
+### C4 — The Mar 3–Apr 6 walkway closure cut Back Forty play by about a third and cost ~$163,000 of expected win.
 
 - **Table / query:** floor_walkways (W-ENT-B40 closure) + prepared_daily_view; ratio of Back Forty to rest-of-floor theo per open hour (pipeline/analysis.py §D)
 - **Result:** Ratio 0.669 before, 0.461 during, 0.643 after; lost theo = Σ closure days (rest rate × pre ratio × B40 hours − B40 theo) = $163,371.
@@ -41,7 +41,7 @@ Every number below is produced by the scripts in `pipeline/` (see the README for
 ### C5 — June demand fell with the city, not because of the floor.
 
 - **Table / query:** property_day coin-in by month vs real_sources/city_visitation_monthly (LVCVA)
-- **Result:** Floor coin-in/day June −4% vs Jan–Apr; LVCVA June visitors −7% vs Jan–Apr mean, convention attendance 375k vs ~590k.
+- **Result:** Floor coin-in/day June −4% vs Jan–Apr; LVCVA June visitors −5% vs Jan–Apr mean (−11% year on year), convention attendance 375k vs ~590k.
 - **Alternative explanation tested:** Heat (NOAA June mean max 38.6 °C) — moves with the same months; we cannot separate heat from tourism with 6 monthly points.
 - **Limitation:** LVCVA describes all Las Vegas visitors and was published later; context only.
 - **Dashboard tab:** `demand`
@@ -70,7 +70,7 @@ Every number below is produced by the scripts in `pipeline/` (see the README for
 - **Limitation:** Carded play only (~66% of coin-in); a player may also play uncarded.
 - **Dashboard tab:** `players`
 
-### C9 — On May 1 comps became 2.3× cheaper in points; comp cost rose ~10%/month and carded play rose 2.8% vs uncarded.
+### C9 — On May 1 comps became 2.3× cheaper in points; comp cost stepped up ~10% in May and carded play rose 2.8% vs uncarded.
 
 - **Table / query:** loyalty_ledger redemptions (points ÷ face value per gaming day); player_period comp_cost; machine_day carded vs uncarded coin-in (DiD, pipeline/analysis.py §E)
 - **Result:** 13.1 → 5.8 points per comp $; reinvestment 1.1% → 1.3% of theo; DiD +2.8% (95% CI 0.5–5.2%); placebo (Jan–Feb vs Mar–Apr) −0.8% (CI −3.0–1.5%).
@@ -105,7 +105,7 @@ Every number below is produced by the scripts in `pipeline/` (see the README for
 ### C13 — Moving the strongest games out of the Back Forty is a good long-run move but not a July one.
 
 - **Table / query:** pipeline/plan.py using zone (Z) and game (C) factors and machine intervals from the full model fit
-- **Result:** Gain/h = (Z_to − Z_from) × (C_strong − C_weak) ≈ $5–7 per pair; 8 candidate pairs ≈ $28,600 in July vs $28,800 cost, then ≈ $1,000/day.
+- **Result:** Gain/h = (Z_to − Z_from) × (C_strong − C_weak) ≈ $5–7 per pair; 8 candidate pairs ≈ $28,000 in July vs $28,800 cost, then ≈ $1,000/day.
 - **Alternative explanation tested:** Regulars follow their game (sorting) — would halve the gain.
 - **Limitation:** Deferred to August so it does not confound the signage test.
 - **Dashboard tab:** `plan`
