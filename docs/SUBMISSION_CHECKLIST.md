@@ -5,7 +5,7 @@ Deadline: hacking ends **Sun Nov 8 2026, 12:00 PM** (check the Devpost event pag
 | # | Item | Where | Status | Who |
 |---|------|-------|--------|-----|
 | 1 | Public interactive dashboard link | GitHub Pages: `https://yahwehc.github.io/td26-dashboard-royale/` (built from `site/`) | ready to deploy | **You**: make repo public + enable Pages (steps below) |
-| 2 | Video walkthrough ≤ 2 min | `docs/VIDEO_SCRIPT.md` | script drafted | **You**: record (screen + voice), upload (YouTube unlisted or Devpost upload) |
+| 2 | Video walkthrough ≤ 2 min | `video/out/dashboard-royale-demo.mp4` (1:41, AI voiceover; rebuild steps in `video/`) | rendered | **You**: upload (YouTube unlisted or Devpost upload) |
 | 3 | Write-up ≤ 400 words | `docs/WRITEUP.md` | drafted | You: paste into Devpost |
 | 4 | One model vs simple baseline, time holdout | dashboard tab "Model" + `pipeline/model.py` + `docs/evidence/model_report.md` | done | — |
 | 5 | All code / transformation steps | the same public repo (`pipeline/`, `site/`, `specs/`) | done | You: push |

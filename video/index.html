@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Dashboard Royale demo film</title>
+<style>
+:root{--ink:#14202e;--muted:#5b6878;--bg:#eef1f5;--gold:#c8962d;--red:#c8423a;--teal:#1f7a74;--navy:#1d2b44}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:var(--bg);font-family:"Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;color:var(--ink)}
+#stage{position:absolute;inset:0;overflow:hidden}
+.field{position:absolute;inset:0;clip-path:circle(0px at 50% 50%)}
+.kicker{position:absolute;left:110px;top:150px;font-size:26px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kicker b{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--gold);margin-right:12px;vertical-align:2px}
+.head{position:absolute;left:110px;top:200px;width:560px;font-size:66px;line-height:1.06;font-weight:800;letter-spacing:-.02em}
+.head span{display:inline-block;margin-right:.24em}
+.stats{position:absolute;left:110px;top:560px;width:560px;display:flex;flex-direction:column;gap:18px}
+.stat{background:#fff;border-radius:18px;padding:18px 26px;box-shadow:0 10px 30px rgba(20,32,46,.10);display:flex;align-items:baseline;gap:18px}
+.stat .v{font-size:46px;font-weight:800;letter-spacing:-.02em;min-width:150px}
+.stat .l{font-size:24px;color:var(--muted);line-height:1.2}
+.win{position:absolute;left:720px;top:130px;width:1110px;height:690px;border-radius:16px;background:#fff;box-shadow:0 30px 80px rgba(20,32,46,.22);overflow:hidden}
+.win .bar{height:38px;background:#e6e9ee;display:flex;align-items:center;gap:8px;padding-left:16px}
+.win .bar i{width:12px;height:12px;border-radius:50%;background:#c9ced6}
+.win .bar u{margin-left:18px;text-decoration:none;font-size:15px;color:#6b7684;background:#fff;border-radius:8px;padding:3px 14px}
+.win .vp{position:absolute;top:38px;left:0;right:0;bottom:0;overflow:hidden}
+.win img{position:absolute;left:0;top:0;width:100%;transform-origin:45% 22%}
+.cursor{position:absolute;width:30px;height:30px;pointer-events:none;z-index:5}
+.ripple{position:absolute;width:20px;height:20px;border-radius:50%;border:3px solid var(--red);z-index:4}
+.cap{position:absolute;left:50%;bottom:52px;transform:translateX(-50%);max-width:1180px;background:rgba(20,32,46,.9);color:#fff;font-size:27px;line-height:1.35;padding:12px 26px;border-radius:12px;text-align:center}
+.prog{position:absolute;left:0;bottom:0;height:6px;background:var(--gold)}
+.title{position:absolute;left:0;right:0;top:300px;text-align:center}
+.title h1{font-size:132px;font-weight:900;letter-spacing:-.035em;line-height:1}
+.title h1 span{display:inline-block}
+.title p{margin-top:36px;font-size:34px;color:var(--muted)}
+.chip{display:inline-block;border-radius:999px;padding:4px 22px;color:#fff}
+.end{position:absolute;inset:0;background:var(--navy);color:#fff}
+.end .ln{position:absolute;left:160px;font-size:96px;font-weight:900;letter-spacing:-.03em}
+.end .foot{position:absolute;left:160px;bottom:150px;font-size:30px;color:#aeb8c8}
+</style></head>
+<body><div id="stage"></div>
+<script>
+// Deterministic film: window.renderAt(t) draws the frame at time t (seconds). render.py calls FILM.init(cues, script) first.
+const ease = x => x <= 0 ? 0 : x >= 1 ? 1 : 1 - Math.pow(1 - x, 3);
+const easeIO = x => x <= 0 ? 0 : x >= 1 ? 1 : x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const prog = (t, a, d) => clamp((t - a) / d, 0, 1);
+const TINT = {title: '#eef1f5', verdict: '#f4efe4', 'verdict-table': '#f4efe4', funnel: '#e9f1f0', hitrate: '#f6e9e7', demand: '#e8edf6',
+  model: '#eef0f8', plan: '#eef4ea', 'plan-cards': '#eef4ea', filtered: '#f1eef6', evidence: '#f4efe4', end: '#1d2b44'};
+const KICK = {verdict: 'Verdict tab', 'verdict-table': 'Verdict tab', funnel: 'Machines tab · Q1', hitrate: 'Machines tab · leak screen',
+  demand: 'Demand tab · Q2', model: 'Model tab · time holdout', plan: 'Plan tab · Q6', 'plan-cards': 'Plan tab · Q6',
+  filtered: 'Filters · drill-down', evidence: 'Evidence tab'};
+// stats appear when their cue starts; [value, label, colour, countTo?]
+const STATS = {
+  loc: [['9 / 10', 'in the Back Forty, the quietest zone', '--gold'], ['8 / 10', 'run low-hold games', '--teal'], ['3 / 10', 'only on the floor part of the period', '--muted']],
+  none: [['0 / 10', 'truly weak after adjusting for zone, game and hours', '--red']],
+  funnel: [['8 / 10', 'inside the 95% luck band', '--teal']],
+  leak: [['38.6%', 'M-1158 hit rate', '--red'], ['31.5%', 'what its game is set to', '--muted'], ['674k', 'spins: not luck, a leak', '--ink']],
+  demand: [['−⅓', 'Back Forty play during the closure', '--red'], ['$163k', 'expected win lost', '--gold', 163]],
+  model: [['3.1%', 'ranking error, zone × game model', '--teal'], ['11.7%', 'raw house win (GM\'s method)', '--red']],
+  plan: [['$23,700', 'spent of $100,000', '--teal', 23700], ['$76,300', 'kept', '--muted', 76300]],
+  actions: [['$1,200', 'inspect M-1158', '--red'], ['$7,500', 'Back Forty signs', '--gold'], ['$15,000', 'one promotion weekend', '--teal']],
+  filters: [['Holdout', 'May–Jun · Back Forty · bank B-31', '--ink']],
+  evidence: [['13', 'claims, each linked to its chart', '--gold']]
+};
+// cursor targets (fraction of the window viewport) for a click per shot
+const CLICK = {filtered: [.30, .06], evidence: [.42, .55], 'plan-cards': [.5, .45], hitrate: [.5, .5]};
+let SC = [], TOTAL = 0, CUES = [];
+
+window.FILM = {
+  init(cues, script) {
+    CUES = cues.cues; TOTAL = cues.total;
+    const meta = Object.fromEntries(script.lines.map(l => [l.id, l]));
+    CUES.forEach(c => Object.assign(c, meta[c.id]));
+    SC = [];
+    for (const c of CUES) {
+      const last = SC[SC.length - 1];
+      if (last && last.shot === c.shot) { last.cues.push(c); continue; }
+      SC.push({shot: c.shot, cues: [c], start: Math.max(0, c.start - .35)});
+    }
+    SC.forEach((s, i) => s.end = i + 1 < SC.length ? SC[i + 1].start : TOTAL);
+    SC[0].start = 0;
+    return {total: TOTAL, scenes: SC.length};
+  },
+  // sound cues for music.py: a whoosh per scene bloom, a pop when it lands, a tick per cursor click
+  get beats() {
+    return {morphs: SC.slice(1).map(s => ({t: s.start, dur: .7, big: s.shot === 'end'})), lands: SC.slice(1).map(s => s.start + .7),
+      clicks: SC.filter(s => CLICK[s.shot]).map(s => s.start + 1.6 + 1.15), swaps: [],
+      pops: CUES.filter(c => STATS[c.id]).flatMap(c => STATS[c.id].map((_, k) => c.start + .5 + k * .45))};
+  }
+};
+
+const stage = document.getElementById('stage');
+function el(tag, cls, html, style) { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; if (style) Object.assign(e.style, style); return e; }
+function words(text, t, t0, step) {
+  return text.split(' ').map((w, i) => { const p = ease(prog(t, t0 + i * step, .45)); return `<span style="opacity:${p};transform:translateY(${(1 - p) * 34}px)">${w}</span>`; }).join('');
+}
+function fmtCount(v, to, p) { const n = Math.round(to * p); return v.startsWith('$') ? '$' + n.toLocaleString('en-US') + (v.endsWith('k') ? 'k' : '') : String(n); }
+
+function drawShot(s, t, field) {
+  const lt = t - s.start, dur = s.end - s.start;
+  const head = s.cues[s.cues.length > 1 && t >= s.cues[1].start ? 1 : 0].head;
+  field.appendChild(el('div', 'kicker', `<b></b>${KICK[s.shot] || ''}`, {opacity: ease(prog(lt, .25, .4))}));
+  const hStart = s.cues.length > 1 && t >= s.cues[1].start ? s.cues[1].start - s.start : .3;
+  field.appendChild(el('div', 'head', words(head, lt, hStart, .07)));
+  // window with screenshot, Ken Burns
+  const wp = ease(prog(lt, .15, .7));
+  const win = el('div', 'win', `<div class="bar"><i></i><i></i><i></i><u>Gilded Ace · Dashboard Royale</u></div><div class="vp"><img src="assets/${s.shot}.png"></div>`,
+    {opacity: wp, transform: `translateX(${(1 - wp) * 120}px) scale(${.94 + .06 * wp})`});
+  const z = 1.1 + .14 * easeIO(clamp(lt / dur, 0, 1));
+  win.querySelector('img').style.transform = `scale(${z})`;
+  field.appendChild(win);
+  // stats
+  const box = el('div', 'stats');
+  let k = 0;
+  const live = s.cues.filter(c => STATS[c.id] && t >= c.start).pop();
+  for (const c of s.cues.filter(c => c === live)) for (const st of (STATS[c.id] || [])) {
+    const a = c.start - s.start + .5 + k * .45, p = ease(prog(lt, a, .5)); k++;
+    if (p <= 0) continue;
+    const v = st[3] ? fmtCount(st[0], st[3], ease(prog(lt, a, 1.1))) : st[0];
+    box.appendChild(el('div', 'stat', `<span class="v" style="color:var(${st[2]})">${v}</span><span class="l">${st[1]}</span>`,
+      {opacity: p, transform: `translateY(${(1 - p) * 30}px)`}));
+  }
+  if (box.children.length > 3) box.style.top = '470px';
+  field.appendChild(box);
+  // cursor + click
+  const ck = CLICK[s.shot];
+  if (ck) {
+    const ca = 1.6, mp = easeIO(prog(lt, ca, 1.1));
+    const x = 720 + 1110 * (ck[0] * mp + 1.05 * (1 - mp)), y = 168 + 652 * (ck[1] * mp + .95 * (1 - mp));
+    const cur = el('div', 'cursor', '<svg viewBox="0 0 24 24" width="30" height="30"><path d="M3 2l7 19 2.6-7.4L20 11z" fill="#14202e" stroke="#fff" stroke-width="1.6"/></svg>', {left: x + 'px', top: y + 'px', opacity: ease(prog(lt, ca - .3, .3))});
+    field.appendChild(cur);
+    const rp = prog(lt, ca + 1.15, .6);
+    if (rp > 0 && rp < 1) field.appendChild(el('div', 'ripple', '', {left: x - 10 + 'px', top: y - 10 + 'px', transform: `scale(${1 + rp * 3})`, opacity: 1 - rp}));
+  }
+}
+
+function drawTitle(s, t, field) {
+  const W = [['Luck,', '--gold'], ['location,', '--teal'], ['or', null], ['a', null], ['leak?', '--red']];
+  const h = W.map(([w, c], i) => { const p = ease(prog(t, .3 + i * .18, .5)); const chip = c && t > 2.2 + i * .35;
+    return `<span style="opacity:${p};transform:translateY(${(1 - p) * 50}px);margin:0 .12em">${chip ? `<span class="chip" style="background:var(${c})">${w}</span>` : w}</span>`; }).join('');
+  field.appendChild(el('div', 'title', `<h1>${h}</h1><p style="opacity:${ease(prog(t, 1.4, .6))}">The Gilded Ace slot floor · Jan–Jun 2025 · 300 machines · which 10 to replace?</p>`));
+}
+
+function drawEnd(s, t, field) {
+  const c = s.cues[0], d = c.end - c.start;
+  const L = ['Keep the ten.', 'Fix the leak.', 'Bring the players back.'];
+  const col = ['#e9c46a', '#ef8a80', '#7fd1c7'];
+  const e = el('div', 'end');
+  L.forEach((l, i) => { const p = ease(prog(t, c.start + i * d / 3, .5));
+    e.appendChild(el('div', 'ln', l, {top: 250 + i * 140 + 'px', opacity: p, transform: `translateX(${(1 - p) * -60}px)`, color: i === 0 ? '#fff' : col[i]})); });
+  e.appendChild(el('div', 'foot', 'Dashboard Royale · TAMU Datathon 2026 · every number recomputed from the casino data', {opacity: ease(prog(t, c.end, .6))}));
+  field.appendChild(e);
+}
+
+window.renderAt = function (t) {
+  stage.innerHTML = '';
+  const i = SC.findIndex(s => t >= s.start && t < s.end);
+  const idx = i < 0 ? SC.length - 1 : i;
+  // previous scene stays underneath while the next one blooms in
+  for (const j of [idx - 1, idx]) {
+    if (j < 0) continue;
+    const s = SC[j];
+    const field = el('div', 'field', '', {background: TINT[s.shot] || '#eef1f5'});
+    const r = j === idx ? easeIO(prog(t, s.start, .7)) * 2300 : 2300;
+    if (j === 0 && idx === 0) field.style.clipPath = 'none';
+    else field.style.clipPath = `circle(${r}px at ${j % 2 ? 1700 : 220}px ${j % 2 ? 900 : 180}px)`;
+    if (j !== idx && prog(t, SC[idx].start, .7) >= 1) continue;
+    if (s.shot === 'title') drawTitle(s, t, field); else if (s.shot === 'end') drawEnd(s, t, field); else drawShot(s, t, field);
+    stage.appendChild(field);
+  }
+  const cue = CUES.find(c => t >= c.start - .1 && t <= c.end + .25);
+  if (cue && SC[idx].shot !== 'end') stage.appendChild(el('div', 'cap', cue.text));
+  stage.appendChild(el('div', 'prog', '', {width: (100 * t / TOTAL) + '%'}));
+};
+</script></body></html>

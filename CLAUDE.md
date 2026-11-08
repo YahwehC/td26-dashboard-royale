@@ -67,4 +67,8 @@ Ideas to adopt: funnel/control-band chart, industry terms (actual-to-theo index,
 - [x] Write-up, appendix, video script, checklist
 - [x] Pushed to private repo (push only, per parent). Funnel chart + chart-width fix + prior-work appendix section added after research.
 - [ ] Make public + enable Pages: user said NOT yet (Nov 7, "still working") — keep private, no Devpost submit until told
-- [ ] User: record video, fill Devpost
+- [x] Demo film (Nov 8, ~1:41, AI voice): `video/` adapted from build-a-dataset's pipeline. `script.json` (lines + shot + headline) → `voice.py`
+  (edge-tts en-US-AndrewNeural → out/cues.json, voice.wav) → `capture.py` (dashboard screenshots from :8790, headless **Edge** via
+  `channel="msedge"`; set TEMP/TMP to `video/out/tmp` or the sandbox blocks mkdtemp) → `render.py --stills ...` (writes beats.json) →
+  `music.py` → `render.py` → `video/out/dashboard-royale-demo.mp4` (gitignored). Film = `video/index.html`, `renderAt(t)`.
+- [ ] User: upload the video (YouTube unlisted / Devpost), fill Devpost

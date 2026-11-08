@@ -1,0 +1,88 @@
+{
+ "voice": "en-US-AndrewNeural",
+ "rate": "+6%",
+ "gap": 0.3,
+ "lead_in": 0.6,
+ "tail": 2.0,
+ "lines": [
+  {
+   "id": "hook1",
+   "shot": "title",
+   "kicker": "The Gilded Ace · Jan–Jun 2025",
+   "head": "Luck, location, or a leak?",
+   "text": "The Gilded Ace's general manager wants to replace the ten slot machines that earned the least this year."
+  },
+  {
+   "id": "hook2",
+   "shot": "verdict",
+   "head": "Is it luck, location, or a leak?",
+   "text": "We asked a simple question first: is it luck, location, or a leak?"
+  },
+  {
+   "id": "loc",
+   "shot": "verdict-table",
+   "head": "9 of 10 sit in the Back Forty",
+   "text": "Nine of the ten are in the Back Forty, the quietest zone. Eight run low-hold games that earn little anywhere. Three were only on the floor part of the time."
+  },
+  {
+   "id": "none",
+   "shot": "verdict-table",
+   "head": "None is a bad machine",
+   "text": "Adjusted for location, game and open hours, every one earns what its spot predicts. None is a bad machine."
+  },
+  {
+   "id": "funnel",
+   "shot": "funnel",
+   "head": "8 of 10 inside the luck band",
+   "text": "On the luck funnel, eight of the GM's ten sit inside the ninety-five percent band. Ordinary bad luck, nothing more."
+  },
+  {
+   "id": "leak",
+   "shot": "hitrate",
+   "head": "M-1158: 38.6% hit rate vs 31.5%",
+   "text": "One machine is different. M-1158 pays on thirty-eight point six percent of spins; its game is set to thirty-one point five. Over six hundred seventy-four thousand spins, that is not luck. It is a leak to inspect."
+  },
+  {
+   "id": "demand",
+   "shot": "demand",
+   "head": "Walkway closed Mar 3 – Apr 6",
+   "text": "Location is the real story. When the walkway to the Back Forty closed in March, its play fell another third. That cost one hundred sixty-three thousand dollars of expected win."
+  },
+  {
+   "id": "model",
+   "shot": "model",
+   "head": "Trained Jan–Apr · tested May–Jun",
+   "text": "Our model trains on January to April and is tested on May and June. Adjusting for zone and game ranks machines with three percent error, versus twelve percent for raw house win."
+  },
+  {
+   "id": "plan",
+   "shot": "plan",
+   "head": "Spend $23,700 · keep $76,300",
+   "text": "So we don't replace the ten. We spend twenty-three thousand seven hundred dollars of the hundred thousand budget."
+  },
+  {
+   "id": "actions",
+   "shot": "plan-cards",
+   "head": "Three priced actions",
+   "text": "Inspect M-1158 for twelve hundred. New Back Forty signs for seventy-five hundred. And one promotion weekend for fifteen thousand, which past events say returns two to five times its cost."
+  },
+  {
+   "id": "filters",
+   "shot": "filtered",
+   "head": "Any period · any zone · any bank",
+   "text": "Every number is recomputed for any period, zone or bank."
+  },
+  {
+   "id": "evidence",
+   "shot": "evidence",
+   "head": "Every claim links to its evidence",
+   "text": "And every claim links straight to the chart that proves it."
+  },
+  {
+   "id": "end",
+   "shot": "end",
+   "head": "Keep the ten. Fix the leak. Bring the players back.",
+   "text": "Keep the ten. Fix the leak. Bring the players back."
+  }
+ ]
+}
